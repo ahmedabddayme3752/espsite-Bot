@@ -111,35 +111,109 @@ jQuery(document).ready(function($) {
 
     // Function to add bot message
     function addBotMessage(message) {
-        const botMessageHtml = `
-            <div class="espbot-message espbot-message-bot">
-                <div class="espbot-message-content">
-                    ${message}
-                    <button class="copy-message" title="Copier le message">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-        chatMessages.append(botMessageHtml);
-        scrollToBottom();
-
-        // Add click handler for the copy button
-        chatMessages.find('.copy-message').last().on('click', function(e) {
-            e.preventDefault();
-            const content = $(this).parent().clone();
-            content.find('.copy-message').remove(); // Remove copy button from clone
-            const textToCopy = content.text().trim();
+        const messageDiv = $('<div>').addClass('espbot-message espbot-message-bot');
+        const contentDiv = $('<div>').addClass('espbot-message-content');
+        
+        try {
+            // Parse the message if it's JSON
+            const parsedMessage = typeof message === 'string' ? JSON.parse(message) : message;
             
-            copyToClipboard(textToCopy);
-
-            // Show feedback
-            const $button = $(this);
-            $button.html('<i class="fas fa-check"></i>');
-            setTimeout(() => {
-                $button.html('<i class="fas fa-copy"></i>');
-            }, 2000);
-        });
+            // Add context section if available
+            if (parsedMessage.context && parsedMessage.context.length > 0) {
+                const contextDiv = $('<div>').addClass('espbot-context-section');
+                contextDiv.append($('<h4>').text('Documents Pertinents:'));
+                parsedMessage.context.forEach(ctx => {
+                    const contextItem = $('<div>').addClass('espbot-context-item');
+                    contextItem.html(escapeHtml(ctx));
+                    contextDiv.append(contextItem);
+                });
+                contentDiv.append(contextDiv);
+            }
+            
+            // Add main response
+            if (parsedMessage.response) {
+                const responseDiv = $('<div>').addClass('espbot-response-section');
+                responseDiv.html(escapeHtml(parsedMessage.response));
+                contentDiv.append(responseDiv);
+            }
+            
+            // Add variations if available
+            if (parsedMessage.variations && parsedMessage.variations.length > 0) {
+                const variationsDiv = $('<div>').addClass('espbot-variations-section');
+                variationsDiv.append($('<h4>').text('Perspectives:'));
+                
+                parsedMessage.variations.forEach(variation => {
+                    const variationDiv = $('<div>').addClass('espbot-variation');
+                    variationDiv.append($('<h5>').text(variation.title));
+                    variationDiv.append($('<p>').html(escapeHtml(variation.content)));
+                    variationsDiv.append(variationDiv);
+                });
+                
+                contentDiv.append(variationsDiv);
+            }
+            
+            // Add FAQ if available
+            if (parsedMessage.faq && parsedMessage.faq.length > 0) {
+                const faqDiv = $('<div>').addClass('espbot-faq-section');
+                faqDiv.append($('<h4>').text('Questions Fréquentes:'));
+                
+                parsedMessage.faq.forEach(item => {
+                    const questionDiv = $('<div>').addClass('espbot-faq-item');
+                    questionDiv.append($('<h5>').text(item.question));
+                    questionDiv.append($('<p>').html(escapeHtml(item.answer)));
+                    faqDiv.append(questionDiv);
+                });
+                
+                contentDiv.append(faqDiv);
+            }
+            
+            // Add sources if available
+            if (parsedMessage.sources && parsedMessage.sources.length > 0) {
+                const sourcesDiv = $('<div>').addClass('espbot-sources-section');
+                sourcesDiv.append($('<h4>').text('Sources:'));
+                const sourcesList = $('<ul>').addClass('espbot-sources-list');
+                
+                parsedMessage.sources.forEach(source => {
+                    if (source) {
+                        const sourceItem = $('<li>').addClass('espbot-source-item');
+                        sourceItem.html(escapeHtml(source));
+                        sourcesList.append(sourceItem);
+                    }
+                });
+                
+                sourcesDiv.append(sourcesList);
+                contentDiv.append(sourcesDiv);
+            }
+            
+        } catch (e) {
+            // Fallback for plain text messages
+            contentDiv.html(escapeHtml(message));
+        }
+        
+        // Add copy button
+        const copyButton = $('<button>')
+            .addClass('copy-message')
+            .html('<i class="fas fa-copy"></i>')
+            .on('click', function(e) {
+                e.preventDefault();
+                const content = contentDiv.clone();
+                content.find('.copy-message').remove();
+                const textToCopy = content.text().trim();
+                
+                copyToClipboard(textToCopy);
+                
+                // Show feedback
+                const $button = $(this);
+                $button.html('<i class="fas fa-check"></i>');
+                setTimeout(() => {
+                    $button.html('<i class="fas fa-copy"></i>');
+                }, 2000);
+            });
+        
+        contentDiv.append(copyButton);
+        messageDiv.append(contentDiv);
+        chatMessages.append(messageDiv);
+        scrollToBottom();
     }
 
     // Function to send message to backend
@@ -178,48 +252,11 @@ jQuery(document).ready(function($) {
 
             // Process the response like Platform.sh site
             if (data.context) {
-                // Extract the main content section
-                const mainContent = data.context.split('Variation 1:')[0].trim();
+                // Extract key information
+                const info = extractKeyInformation(data.context);
                 
-                // Clean up the content
-                let cleanContent = mainContent
-                    .replace(/Document Title:.*?\n/g, '')
-                    .replace(/Chunk: \d+\n/g, '')
-                    .replace(/High Relevancy:.*?\n/g, '')
-                    .replace(/SUIVEZ-NOUS SUR.*$/gms, '')
-                    .replace(/CONTACTEZ-NOUS.*$/gms, '')
-                    .trim();
-
-                // Split into lines and process
-                const lines = cleanContent.split('\n');
-                let formattedContent = '';
-                
-                // Process each line
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
-
-                    // Skip bullet points that are just formatting
-                    if (line === '*') continue;
-
-                    // Handle bullet points
-                    if (line.startsWith('*')) {
-                        formattedContent += line.substring(1).trim() + '\n';
-                    } else {
-                        formattedContent += line + '\n';
-                    }
-                }
-
-                // Clean up extra newlines and spaces
-                formattedContent = formattedContent
-                    .replace(/\n{3,}/g, '\n\n')
-                    .replace(/\s+\n/g, '\n')
-                    .trim();
-
-                // Make dates bold
-                formattedContent = formattedContent.replace(/(\d{1,2} [A-Za-zéû]+ \d{4})/g, '<strong>$1</strong>');
-
-                return formattedContent || 'Je suis désolé, je n\'ai pas trouvé d\'informations pertinentes pour votre question. Pouvez-vous reformuler votre question?';
+                // Generate a natural response
+                return generateNaturalResponse(info, message);
             }
 
             return 'Je suis désolé, je n\'ai pas trouvé d\'informations pertinentes pour votre question. Pouvez-vous reformuler votre question?';
@@ -229,6 +266,95 @@ jQuery(document).ready(function($) {
             console.error('Network error:', error);
             return 'Désolé, j\'ai rencontré une erreur de connexion. Veuillez vérifier votre connexion et réessayer.';
         }
+    }
+
+    // Function to extract key information from context
+    function extractKeyInformation(context) {
+        // Remove metadata and formatting
+        let cleanContext = context
+            .replace(/Document Title:.*?\n/g, '')
+            .replace(/Chunk: \d+\n/g, '')
+            .replace(/High Relevancy:.*?\n/g, '')
+            .replace(/SUIVEZ-NOUS SUR.*$/gms, '')
+            .replace(/CONTACTEZ-NOUS.*$/gms, '')
+            .trim();
+
+        // Split into sections
+        const sections = cleanContext.split('Variation');
+        const mainContent = sections[0].trim();
+
+        // Extract key points
+        const keyPoints = [];
+        const lines = mainContent.split('\n');
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+
+            // Capture dates and their associated content
+            if (/\d{1,2} [A-Za-zéû]+ \d{4}/.test(line)) {
+                const nextLine = lines[i + 1]?.trim();
+                if (nextLine && !nextLine.startsWith('*')) {
+                    keyPoints.push({
+                        date: line,
+                        content: nextLine
+                    });
+                }
+                continue;
+            }
+
+            // Capture bullet points
+            if (line.startsWith('*')) {
+                keyPoints.push({
+                    type: 'bullet',
+                    content: line.substring(1).trim()
+                });
+                continue;
+            }
+
+            // Capture regular content
+            if (line.length > 20 && !line.startsWith('Variation')) {
+                keyPoints.push({
+                    type: 'content',
+                    content: line
+                });
+            }
+        }
+
+        return keyPoints;
+    }
+
+    // Function to generate a natural response
+    function generateNaturalResponse(keyPoints, question) {
+        // Identify question type
+        const questionLower = question.toLowerCase();
+        let response = '';
+
+        // Check if it's about a specific date
+        if (questionLower.includes('quand') || /\d{4}/.test(questionLower)) {
+            const datePoints = keyPoints.filter(p => p.date);
+            if (datePoints.length > 0) {
+                response = datePoints.map(p => `<strong>${p.date}</strong>\n${p.content}`).join('\n\n');
+                return response;
+            }
+        }
+
+        // For general questions, combine relevant information
+        const relevantPoints = keyPoints.filter(p => 
+            p.type === 'content' || 
+            (p.content && p.content.toLowerCase().includes(questionLower.replace(/quand|est-ce|que|qui|comment|pourquoi/g, '').trim()))
+        );
+
+        if (relevantPoints.length > 0) {
+            response = relevantPoints.map(p => {
+                if (p.date) {
+                    return `<strong>${p.date}</strong>\n${p.content}`;
+                }
+                return p.content;
+            }).join('\n\n');
+        }
+
+        return response || 'Je suis désolé, je n\'ai pas trouvé d\'informations pertinentes pour votre question. Pouvez-vous reformuler votre question?';
     }
 
     // Function to handle message sending

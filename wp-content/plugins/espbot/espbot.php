@@ -57,14 +57,179 @@ function espbot_enqueue_scripts() {
 }
 add_action('wp_enqueue_scripts', 'espbot_enqueue_scripts');
 
+// Add CORS headers for AJAX requests
+function espbot_add_cors_headers() {
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization');
+    
+    if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+        status_header(200);
+        exit();
+    }
+}
+add_action('init', 'espbot_add_cors_headers');
+
+// Add CORS headers for font files
+function espbot_add_font_cors_headers() {
+    if (strpos($_SERVER['REQUEST_URI'], '.woff2') !== false || 
+        strpos($_SERVER['REQUEST_URI'], '.woff') !== false || 
+        strpos($_SERVER['REQUEST_URI'], '.ttf') !== false) {
+        header('Access-Control-Allow-Origin: *');
+    }
+}
+add_action('init', 'espbot_add_font_cors_headers');
+
 // Handle AJAX message sending
 function espbot_handle_message() {
-    check_ajax_referer('espbot_chat_nonce', 'nonce');
+    check_ajax_referer('espbot_nonce', 'nonce');
     
     $message = sanitize_text_field($_POST['message']);
-    $response = "Je suis désolé, je suis en cours de développement. Je ne peux pas encore répondre à vos questions.";
     
-    wp_send_json_success($response);
+    // Get relevant documents based on the query
+    $relevant_docs = espbot_search_documents($message);
+    
+    // Generate response using the context
+    $response_data = espbot_generate_response($message, $relevant_docs);
+    
+    wp_send_json_success($response_data);
 }
 add_action('wp_ajax_espbot_send_message', 'espbot_handle_message');
 add_action('wp_ajax_nopriv_espbot_send_message', 'espbot_handle_message');
+
+// Function to search documents
+function espbot_search_documents($query) {
+    global $wpdb;
+    $relevant_docs = [];
+    
+    // Search in your existing database tables
+    // Adjust the table name and columns according to your database structure
+    $results = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT * FROM your_content_table 
+            WHERE content LIKE %s 
+            ORDER BY relevance DESC 
+            LIMIT 3",
+            '%' . $wpdb->esc_like($query) . '%'
+        )
+    );
+    
+    if ($results) {
+        foreach ($results as $row) {
+            $relevant_docs[] = [
+                'title' => $row->title,
+                'content' => $row->content,
+                'relevance' => $row->relevance
+            ];
+        }
+    }
+    
+    return $relevant_docs;
+}
+
+// Function to generate response
+function espbot_generate_response($query, $docs) {
+    // Extract relevant context from documents
+    $context = array_map(function($doc) {
+        return [
+            'title' => $doc['title'],
+            'content' => espbot_extract_relevant_section($doc['content'])
+        ];
+    }, $docs);
+    
+    // Generate main response based on the context
+    $main_response = espbot_generate_main_response($query, $context);
+    
+    // Generate variations with different perspectives
+    $variations = [
+        [
+            'title' => 'Perspective Académique',
+            'content' => espbot_format_academic_response($main_response)
+        ],
+        [
+            'title' => 'Explication Simplifiée',
+            'content' => espbot_format_simple_response($main_response)
+        ],
+        [
+            'title' => 'Vue Administrative',
+            'content' => espbot_format_administrative_response($main_response)
+        ]
+    ];
+    
+    // Generate FAQ if needed
+    $faq = [];
+    if (espbot_should_generate_faq($query)) {
+        $faq = espbot_generate_faq_from_context($query, $context);
+    }
+    
+    return [
+        'context' => $context,
+        'response' => $main_response,
+        'variations' => $variations,
+        'faq' => $faq,
+        'sources' => array_column($docs, 'title')
+    ];
+}
+
+// Function to extract relevant section
+function espbot_extract_relevant_section($content) {
+    // Extract the most relevant part of the content
+    // You can implement more sophisticated relevance extraction here
+    return wp_trim_words($content, 50, '...');
+}
+
+// Function to generate main response
+function espbot_generate_main_response($query, $context) {
+    // Combine context information to generate a response
+    $response = "Basé sur les documents disponibles:\n\n";
+    foreach ($context as $doc) {
+        $response .= "- " . strip_tags($doc['content']) . "\n";
+    }
+    return $response;
+}
+
+// Function to format academic response
+function espbot_format_academic_response($response) {
+    return "D'un point de vue académique: " . $response;
+}
+
+// Function to format simple response
+function espbot_format_simple_response($response) {
+    return "En termes simples: " . $response;
+}
+
+// Function to format administrative response
+function espbot_format_administrative_response($response) {
+    return "Du point de vue administratif: " . $response;
+}
+
+// Function to determine if FAQ should be generated
+function espbot_should_generate_faq($query) {
+    // Determine if FAQ would be helpful for this query
+    $faq_triggers = ['comment', 'quoi', 'pourquoi', 'qui', 'quand', 'où'];
+    foreach ($faq_triggers as $trigger) {
+        if (stripos($query, $trigger) !== false) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Function to generate FAQ from context
+function espbot_generate_faq_from_context($query, $context) {
+    // Generate FAQ based on the context
+    $faq = [];
+    
+    // Extract key points from context to create FAQ
+    foreach ($context as $doc) {
+        $content = $doc['content'];
+        // Add relevant questions based on content
+        // You can implement more sophisticated FAQ generation here
+        $faq[] = [
+            'question' => "Que dit le document '{$doc['title']}' à ce sujet ?",
+            'answer' => wp_trim_words($content, 30, '...')
+        ];
+    }
+    
+    return $faq;
+}

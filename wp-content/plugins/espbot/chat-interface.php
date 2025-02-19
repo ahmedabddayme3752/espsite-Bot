@@ -44,21 +44,6 @@ function espbot_chat_interface() {
         background: #f5f5f5;
     }
 
-    .espbot-chat-input-area {
-        padding: 15px;
-        background: #f5f5f5;
-        border-top: 1px solid #fff;
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 60px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        border-radius: 0 0 10px 10px;
-    }
-
     .espbot-message {
         margin-bottom: 15px;
         max-width: 85%;
@@ -113,6 +98,64 @@ function espbot_chat_interface() {
         margin-top: 4px;
     }
 
+    .espbot-context-section {
+        margin-bottom: 10px;
+    }
+
+    .espbot-context-section h4 {
+        color: #2c3e50;
+        margin: 0 0 5px 0;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .espbot-context-list {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    .espbot-context-item {
+        color: #555;
+        margin-bottom: 5px;
+    }
+
+    .espbot-response-section {
+        margin-bottom: 10px;
+    }
+
+    .espbot-sources-section {
+        margin-top: 10px;
+        padding-top: 5px;
+        border-top: 1px solid #eee;
+    }
+
+    .espbot-sources-section h4 {
+        color: #2c3e50;
+        margin: 0 0 5px 0;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .espbot-sources-list {
+        margin: 0;
+        padding-left: 20px;
+        font-size: 12px;
+        color: #666;
+    }
+
+    .espbot-chat-input-area {
+        padding: 15px;
+        background: #f5f5f5;
+        border-top: 1px solid #fff;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        border-radius: 0 0 10px 10px;
+    }
+
     .espbot-chat-input {
         flex: 1;
         padding: 10px 15px;
@@ -143,6 +186,19 @@ function espbot_chat_interface() {
         background: #005000;
     }
 
+    .typing-indicator {
+        display: none;
+        padding: 10px 15px;
+        background: white;
+        border: 1px solid #fff;
+        border-radius: 15px;
+        margin-bottom: 15px;
+        color: #666;
+        max-width: 85%;
+        float: left;
+        clear: both;
+    }
+
     .copy-message {
         position: absolute;
         right: 8px;
@@ -167,19 +223,6 @@ function espbot_chat_interface() {
 
     .copy-message .fa-check {
         color: #28a745;
-    }
-
-    .typing-indicator {
-        display: none;
-        padding: 10px 15px;
-        background: white;
-        border: 1px solid #fff;
-        border-radius: 15px;
-        margin-bottom: 15px;
-        color: #666;
-        max-width: 85%;
-        float: left;
-        clear: both;
     }
 
     /* Scrollbar Styles */
@@ -257,9 +300,6 @@ function espbot_chat_interface() {
                     <div class="espbot-message-content">
                         <p>👋 Bonjour! Je suis EspBot, votre assistant virtuel.</p>
                         <p class="subtitle">Comment puis-je vous aider aujourd'hui?</p>
-                        <button class="copy-message">
-                            <i class="fas fa-copy"></i>
-                        </button>
                     </div>
                 </div>
             </div>
