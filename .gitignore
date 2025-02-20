@@ -13,12 +13,17 @@
 # But ignore everything in wp-content
 wp-content/*
 
-# Except the plugins directory
+# Except the plugins and themes directories
 !wp-content/plugins/
+!wp-content/themes/
 
 # But ignore all plugins except espbot
 wp-content/plugins/*
 !wp-content/plugins/espbot/
+
+# But ignore all themes except espbot
+wp-content/themes/*
+!wp-content/themes/espbot/
 
 # Ignore unnecessary files
 *.log
