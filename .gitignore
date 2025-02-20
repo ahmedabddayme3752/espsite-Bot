@@ -1,25 +1,31 @@
-# WordPress core files to ignore
-wp-config.php
-wp-content/uploads/
-wp-content/upgrade/
-wp-content/backup-db/
-wp-content/cache/
-wp-content/backups/
-wp-content/ai1wm-backups/
+# Ignore everything
+/*
 
-# Various system files
-.DS_Store
-Thumbs.db
+# But not these files...
+!.gitignore
+!docker-compose.yml
+!Dockerfile
+!wp-config-render.php
 
-# Development files
+# And not these folders...
+!wp-content/
+
+# But ignore everything in wp-content
+wp-content/*
+
+# Except the plugins directory
+!wp-content/plugins/
+
+# But ignore all plugins except espbot
+wp-content/plugins/*
+!wp-content/plugins/espbot/
+
+# Ignore unnecessary files
 *.log
 .htaccess
-license.txt
-readme.html
-sitemap.xml
-sitemap.xml.gz
-
-# Local development configurations
 *.sql
 *.tar.gz
 *.zip
+wp-content/ai1wm-backups/
+.DS_Store
+Thumbs.db
