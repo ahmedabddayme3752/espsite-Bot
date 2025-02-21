@@ -316,90 +316,68 @@ function displayMessage(message, isUser = false) {
     messageContent.className = 'espbot-message-content';
     
     if (!isUser) {
-        // Pre-process the message to standardize markdown
-        let processedMessage = message
-            // Normalize line endings
-            .replace(/\r\n/g, '\n')
-            // Remove extra spaces
-            .replace(/[ \t]+/g, ' ')
-            // Handle single asterisks that aren't part of bold text
-            .replace(/(?<!\*)\*(?!\*)(?![^*]*\*\*)/g, '•')
-            // Handle double asterisks for bold text
-            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-            // Convert asterisk lists to dash lists
-            .replace(/^\*/gm, '-')
-            // Fix spacing around lists
-            .replace(/\n-/g, '\n\n-')
-            // Fix spacing after colons
-            .replace(/:\s*/g, ' : ')
-            // Clean up multiple spaces
-            .replace(/\s{2,}/g, ' ')
-            .trim();
-
-        // Configure marked.js with CommonMark settings
-        marked.setOptions({
-            gfm: true,
-            breaks: true,
-            pedantic: false,
-            sanitize: false,
-            smartLists: true,
-            smartypants: true,
-            xhtml: true,
-            headerIds: false
-        });
-        
         try {
-            // Parse markdown
-            let parsedContent = marked.parse(processedMessage, {
-                silent: true
-            });
+            // Pre-process the message
+            let processedMessage = message
+                // Fix line endings
+                .replace(/\r\n/g, '\n')
+                // Ensure proper spacing after colons in bold text
+                .replace(/\*\*([^*]+):\*\*/g, '**$1 :**')
+                // Handle nested lists by preserving indentation
+                .replace(/^(\s*)\*/gm, function(match, spaces) {
+                    return spaces + '-';
+                })
+                // Clean up extra spaces (but preserve indentation)
+                .replace(/([^\s])\s{2,}([^\s])/g, '$1 $2')
+                .trim();
+
+            // Convert markdown to HTML
+            const html = converter.makeHtml(processedMessage);
             
-            // Post-process the HTML
-            parsedContent = parsedContent
-                // Clean up any remaining asterisks
-                .replace(/\*/g, '•')
-                // Fix spacing around colons
-                .replace(/(\w+)\s*:/g, '$1 :')
-                // Clean up extra spaces
-                .replace(/\s{2,}/g, ' ')
-                // Fix bullet points
-                .replace(/[•*]/g, '•');
-            
-            messageContent.innerHTML = parsedContent;
-            
-            // Process list items
-            const listItems = messageContent.getElementsByTagName('li');
-            Array.from(listItems).forEach(li => {
-                // Clean up list item content
-                li.innerHTML = li.innerHTML
-                    .replace(/^\s+|\s+$/g, '')
-                    .replace(/\s{2,}/g, ' ')
-                    .replace(/(\w+)\s*:/g, '$1 :')
-                    .replace(/[•*]/g, '•');
+            // Create temporary div for processing
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+
+            // Process nested lists
+            const lists = tempDiv.querySelectorAll('ul');
+            lists.forEach(list => {
+                // Add proper classes
+                list.classList.add('md-list');
+                
+                // Process list items
+                const items = list.querySelectorAll('li');
+                items.forEach(item => {
+                    item.classList.add('md-list-item');
+                    
+                    // Fix spacing after bold text with colons
+                    const boldElements = item.querySelectorAll('.md-bold');
+                    boldElements.forEach(bold => {
+                        if (bold.textContent.endsWith(':')) {
+                            const space = document.createTextNode(' ');
+                            bold.parentNode.insertBefore(space, bold.nextSibling);
+                        }
+                    });
+                });
+
+                // Handle nested lists specifically
+                const nestedLists = list.querySelectorAll('ul');
+                nestedLists.forEach(nested => {
+                    nested.classList.add('md-list');
+                });
             });
 
-            // Process paragraphs
-            const paragraphs = messageContent.getElementsByTagName('p');
-            Array.from(paragraphs).forEach(p => {
-                // Clean up paragraph content
-                p.innerHTML = p.innerHTML
-                    .replace(/^\s+|\s+$/g, '')
-                    .replace(/\s{2,}/g, ' ')
-                    .replace(/[•*]/g, '•');
-
-                if (p.querySelector('strong') && !p.closest('li')) {
-                    p.style.marginTop = '16px';
-                    p.style.marginBottom = '8px';
+            // Clean up any remaining asterisks
+            const textNodes = tempDiv.getElementsByTagName('*');
+            Array.from(textNodes).forEach(node => {
+                if (node.childNodes.length === 1 && node.childNodes[0].nodeType === 3) {
+                    node.textContent = node.textContent
+                        .replace(/\*\*/g, '')
+                        .replace(/\*/g, '')
+                        .trim();
                 }
             });
 
-            // Clean up lists
-            const lists = messageContent.getElementsByTagName('ul');
-            Array.from(lists).forEach((ul, index, array) => {
-                if (index < array.length - 1) {
-                    ul.style.marginBottom = '16px';
-                }
-            });
+            messageContent.innerHTML = tempDiv.innerHTML;
 
         } catch (error) {
             console.error('Markdown parsing error:', error);

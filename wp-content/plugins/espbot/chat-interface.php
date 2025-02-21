@@ -7,8 +7,61 @@
 function espbot_chat_interface() {
     ob_start();
     ?>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=1">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <script>
+    // Initialize Showdown converter with specific options for asterisk handling
+    const converter = new showdown.Converter({
+        simpleLineBreaks: true,
+        literalMidWordUnderscores: true,
+        literalMidWordAsterisks: false,
+        strikethrough: true,
+        tables: true,
+        tasklists: true,
+        smartIndentationFix: true,
+        disableForced4SpacesIndentedSublists: false,
+        parseImgDimensions: true,
+        simplifiedAutoLink: true,
+        extensions: [
+            {
+                type: 'lang',
+                regex: /^\s*\* /gm,
+                replace: function(match) {
+                    // Count leading spaces to determine nesting level
+                    const spaces = match.match(/^\s*/)[0].length;
+                    return '    '.repeat(Math.floor(spaces/4)) + '- ';
+                }
+            },
+            {
+                type: 'output',
+                regex: /<ul>/g,
+                replace: '<ul class="md-list">'
+            },
+            {
+                type: 'output',
+                regex: /<li>/g,
+                replace: '<li class="md-list-item">'
+            },
+            {
+                type: 'output',
+                regex: /<strong>/g,
+                replace: '<strong class="md-bold">'
+            }
+        ]
+    });
+
+    // Add custom extension for better bold text handling
+    showdown.extension('customBold', {
+        type: 'lang',
+        regex: /\*\*([^*]+)\*\*/g,
+        replace: function(match, content) {
+            return '<strong class="md-bold">' + content + '</strong>';
+        }
+    });
+
+    converter.useExtension('customBold');
+    </script>
+
     <style>
     .espbot-chat-window {
         display: none;
@@ -23,8 +76,9 @@ function espbot_chat_interface() {
         z-index: 9999;
         display: flex;
         flex-direction: column;
-        transition: all 0.3s ease;
         -webkit-overflow-scrolling: touch;
+        touch-action: pan-y pinch-zoom;
+        overscroll-behavior: contain;
     }
 
     @supports not (width: min(450px, 95%)) {
@@ -53,6 +107,9 @@ function espbot_chat_interface() {
         scrollbar-width: thin;
         scrollbar-color: #888 #f1f1f1;
         background: #f5f5f5;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
     }
 
     .espbot-message {
@@ -62,6 +119,10 @@ function espbot_chat_interface() {
         word-wrap: break-word;
         display: flex;
         flex-direction: column;
+        user-select: text;
+        -webkit-user-select: text;
+        -moz-user-select: text;
+        -ms-user-select: text;
     }
 
     .espbot-message-bot {
@@ -106,6 +167,8 @@ function espbot_chat_interface() {
         line-height: 1.6;
         font-size: 15px;
         position: relative;
+        user-select: text;
+        -webkit-user-select: text;
     }
 
     .espbot-message-content p {
@@ -118,17 +181,18 @@ function espbot_chat_interface() {
     }
 
     .espbot-message-content ul {
-        margin: 8px 0;
-        padding: 0;
-        list-style: none;
+        list-style-type: disc !important;
+        padding-left: 20px !important;
+        margin: 8px 0 !important;
     }
 
-    .espbot-message-content ul:first-of-type {
-        margin-top: 16px;
+    .espbot-message-content ul ul {
+        margin: 4px 0 4px 0 !important;
+        list-style-type: circle !important;
     }
 
-    .espbot-message-content ul:last-of-type {
-        margin-bottom: 0;
+    .espbot-message-content ul ul li {
+        list-style-type: circle !important;
     }
 
     .espbot-message-content ul li {
@@ -299,7 +363,6 @@ function espbot_chat_interface() {
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: background-color 0.2s;
     }
 
     .espbot-chat-send:hover {
@@ -435,80 +498,74 @@ function espbot_chat_interface() {
         color: #ffffff;
     }
 
-    /* Scrollbar Styles */
-    .espbot-chat-messages::-webkit-scrollbar {
-        width: 6px;
+    /* Enhanced markdown styles */
+    .espbot-message-content {
+        font-size: 15px;
+        line-height: 1.6;
+        color: #333;
     }
 
-    .espbot-chat-messages::-webkit-scrollbar-track {
-        background: #f1f1f1;
+    .espbot-message-content .md-list {
+        margin: 8px 0 !important;
+        padding-left: 20px !important;
     }
 
-    .espbot-chat-messages::-webkit-scrollbar-thumb {
-        background: #888;
+    .espbot-message-content .md-list .md-list {
+        margin: 4px 0 4px 0 !important;
+    }
+
+    .espbot-message-content .md-list-item {
+        margin: 6px 0 !important;
+        padding-left: 4px !important;
+        line-height: 1.5;
+        display: list-item !important;
+    }
+
+    .espbot-message-content .md-bold {
+        font-weight: 600;
+        color: inherit;
+        display: inline-block;
+        margin-right: 2px;
+    }
+
+    /* Remove any custom bullets */
+    .espbot-message-content li::before {
+        display: none !important;
+    }
+
+    /* Better spacing for text after bold */
+    .espbot-message-content .md-bold + span {
+        margin-left: 4px;
+    }
+
+    /* Theme colors */
+    .espbot-message-bot .espbot-message-content {
+        color: #333;
+    }
+
+    .espbot-message-user .espbot-message-content {
+        color: #fff;
+    }
+
+    /* Better code block styling */
+    .espbot-message-content pre {
+        background: #f6f8fa;
+        border-radius: 6px;
+        padding: 16px;
+        overflow: auto;
+    }
+
+    .espbot-message-content code {
+        font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+        font-size: 85%;
+        padding: 0.2em 0.4em;
+        background: rgba(27,31,35,0.05);
         border-radius: 3px;
     }
 
-    .espbot-chat-messages::-webkit-scrollbar-thumb:hover {
-        background: #666;
-    }
-
-    /* Responsive Design */
-    @media screen and (max-width: 768px) {
-        .espbot-chat-window {
-            right: 50%;
-            transform: translateX(50%);
-            bottom: 70px;
-        }
-        
-        .espbot-message {
-            max-width: 90%;
-            font-size: 14px;
-        }
-        
-        .espbot-chat-header {
-            -webkit-tap-highlight-color: transparent;
-        }
-    }
-    
-    @media screen and (max-width: 480px) {
-        .espbot-chat-window {
-            bottom: 60px;
-            height: 85vh;
-        }
-        
-        .espbot-chat-header {
-            padding: 10px;
-            height: 60px;
-        }
-        
-        .espbot-chat-input-area {
-            padding: 10px;
-            -webkit-appearance: none;
-        }
-        
-        .espbot-chat-input {
-            padding: 8px 12px;
-            font-size: 16px; /* Prevents iOS zoom on focus */
-        }
-        
-        .espbot-message {
-            max-width: 95%;
-        }
-        
-        /* Improve touch targets */
-        .espbot-chat-send {
-            min-width: 44px;
-            min-height: 44px;
-        }
-    }
-
-    /* Handle orientation changes */
-    @media screen and (orientation: landscape) and (max-height: 500px) {
-        .espbot-chat-window {
-            height: 90vh;
-            bottom: 10px;
-        }
+    .espbot-message-content pre code {
+        padding: 0;
+        background: transparent;
     }
     </style>
 

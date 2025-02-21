@@ -1,62 +1,239 @@
-# ESPBot - Assistant Virtuel pour l'École Supérieure Polytechnique
+# 🤖 ESPBot - Assistant Virtuel pour l'ESP
 
-Un plugin WordPress qui intègre un chatbot intelligent pour l'École Supérieure Polytechnique (ESP), développé par Ahmed Abd Dayme (AhmedBouha).
+<div align="center">
 
-## Description
+![ESP Logo](https://esp.sn/wp-content/uploads/2023/11/cropped-logo-ESP.png)
 
-ESPBot est un assistant virtuel qui aide les étudiants, les professeurs et le personnel de l'ESP en fournissant des informations précises et pertinentes sur l'école. Il utilise la technologie RAG (Retrieval-Augmented Generation) pour s'appuyer sur des sources fiables et vérifiées.
+[![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
+[![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6%2B-yellow.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![Markdown](https://img.shields.io/badge/Markdown-Support-green.svg)](https://www.markdownguide.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688.svg)](https://fastapi.tiangolo.com/)
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Active-success.svg)]()
+[![Author](https://img.shields.io/badge/Author-Ahmed%20Abd%20Dayme-orange.svg)](https://github.com/ahmedabddayme3752)
 
-## Fonctionnalités
+*Un chatbot intelligent pour l'École Supérieure Polytechnique (ESP)*
 
-- Interface de chat intuitive et responsive
-- Réponses en temps réel aux questions sur l'ESP
-- Support pour les informations sur :
-  - Les programmes académiques
-  - Les admissions
-  - Les événements
-  - Les partenariats entreprises
-  - Et plus encore...
+[🌐 Demo](https://esp.sn) | [📚 Documentation](#documentation) | [🚀 Installation](#installation) | [💬 Contact](#-contact)
 
-## Installation
+</div>
 
-1. Téléchargez le dossier `espbot` dans le répertoire `wp-content/plugins/` de votre installation WordPress
-2. Activez le plugin dans le panneau d'administration WordPress
-3. Le chatbot apparaîtra automatiquement sur votre site
+---
 
-### Prérequis
+## ✨ Points Forts
 
-- WordPress 5.0 ou supérieur
-- PHP 7.4 ou supérieur
-- XAMPP ou un serveur web similaire
+<table>
+<tr>
+<td width="50%">
 
-## Configuration
+### 🎯 Fonctionnalités Principales
+- 💬 Chat moderne et intuitif
+- 🎯 Réponses contextuelles
+- 📱 Design responsive
+- 🔒 Sécurisé et fiable
 
-1. Le chatbot utilise l'API FastAPI hébergée sur Platform.sh
-2. Les données sont stockées dans Weaviate Cloud
-3. Aucune configuration supplémentaire n'est nécessaire
+</td>
+<td width="50%">
 
-## Utilisation
+### 🚀 Performance
+- ⚡ Chargement rapide
+- 🔄 Mise à jour en temps réel
+- 📊 Analytics intégrés
+- 🌍 Support multilingue
 
-- Le chatbot apparaît comme une fenêtre de chat sur votre site WordPress
-- Les visiteurs peuvent poser des questions en français
-- Le chatbot fournit des réponses basées sur la documentation officielle de l'ESP
+</td>
+</tr>
+</table>
 
-## Développement
+## 📋 Description
 
-Développé par Ahmed Abd Dayme (AhmedBouha)
+ESPBot est votre assistant virtuel dédié à l'ESP, conçu pour fournir des informations instantanées et précises. Utilisant la technologie RAG (Retrieval-Augmented Generation), il garantit des réponses fiables basées sur des sources vérifiées.
 
-### Technologies utilisées
+<details>
+<summary>🔍 En savoir plus sur les fonctionnalités</summary>
 
-- PHP/WordPress pour le plugin
-- JavaScript pour l'interface utilisateur
-- FastAPI pour le backend
-- Weaviate pour le stockage et la recherche vectorielle
+### 🎨 Interface Utilisateur
+- 💅 Design moderne et épuré
+- 📱 Adaptation automatique à tous les écrans
+- ⚡ Animations fluides
+- 🌙 Mode sombre/clair
 
-## Licence
+### 📝 Formatage Avancé
+- **Markdown Support:**
+  ```markdown
+  **Titre:** Description
+  * Point principal
+    * Sous-point
+  ```
+- 🔤 Mise en forme riche
+- 📑 Listes multiniveaux
+- 🔗 Liens cliquables
 
-Ce projet est un développement propriétaire pour l'École Supérieure Polytechnique.
+### 🎯 Fonctionnalités Clés
+- 📚 Information sur les programmes
+- 🎓 Processus d'admission
+- 📅 Événements et actualités
+- 🤝 Partenariats entreprises
+- 📋 Procédures administratives
 
-## Contact
+</details>
 
-Pour toute question ou support, contactez :
-Ahmed Abd Dayme AhmedBouha
+## 🚀 Installation
+
+<details>
+<summary>📥 Voir les étapes d'installation</summary>
+
+1. **Téléchargement**
+   ```bash
+   git clone https://github.com/ahmedabddayme3752/espbotsite.git
+   ```
+
+2. **Installation**
+   - Copiez le dossier `espbot` dans `wp-content/plugins/`
+   - Activez le plugin dans WordPress
+
+3. **Configuration**
+   - Aucune configuration supplémentaire requise
+   - Fonctionne immédiatement après l'activation
+
+</details>
+
+### 📋 Prérequis
+
+<table>
+<tr>
+<td>WordPress</td>
+<td>≥ 5.0</td>
+</tr>
+<tr>
+<td>PHP</td>
+<td>≥ 7.4</td>
+</tr>
+<tr>
+<td>Serveur</td>
+<td>XAMPP/WAMP/MAMP</td>
+</tr>
+<tr>
+<td>Internet</td>
+<td>Requis pour CDN</td>
+</tr>
+</table>
+
+## 🛠️ Technologies
+
+<table>
+<tr>
+<td width="50%">
+
+### 🎨 Frontend
+- JavaScript moderne
+- Showdown.js
+- CSS3 animations
+- Interface responsive
+
+</td>
+<td width="50%">
+
+### ⚙️ Backend
+- PHP/WordPress
+- FastAPI
+- Weaviate Cloud
+- RAG Technology
+
+</td>
+</tr>
+</table>
+
+## 📁 Structure du Projet
+
+```
+espbot/
+├── 📄 README.md
+├── 📱 chat-interface.php     # Interface principale
+├── 📂 assets/
+│   ├── 📂 js/
+│   │   └── 📜 chat.js       # Logique JavaScript
+│   └── 📂 css/
+│       └── 🎨 style.css     # Styles
+└── 📂 includes/
+    └── 🔌 api.php           # API Integration
+```
+
+## 🔄 Maintenance
+
+<table>
+<tr>
+<td>1️⃣</td>
+<td>💾 Sauvegardez vos données</td>
+</tr>
+<tr>
+<td>2️⃣</td>
+<td>📥 Téléchargez les mises à jour</td>
+</tr>
+<tr>
+<td>3️⃣</td>
+<td>🔄 Remplacez les fichiers</td>
+</tr>
+<tr>
+<td>4️⃣</td>
+<td>✅ Vérifiez la configuration</td>
+</tr>
+</table>
+
+## 👨‍💻 Développement
+
+<div align="center">
+
+### Développé avec ❤️ par Ahmed Abd Dayme (AhmedBouha)
+
+[![GitHub followers](https://img.shields.io/github/followers/ahmedabddayme3752?style=social)](https://github.com/ahmedabddayme3752)
+
+</div>
+
+## 📄 Licence
+
+<div align="center">
+
+**Propriétaire © 2024 Ahmed Abd Dayme**  
+Tous droits réservés
+
+</div>
+
+## 📞 Contact
+
+<table>
+<tr>
+<td>👨‍💻 Développeur</td>
+<td>Ahmed Abd Dayme (AhmedBouha)</td>
+</tr>
+<tr>
+<td>🌐 GitHub</td>
+<td><a href="https://github.com/ahmedabddayme3752">ahmedabddayme3752</a></td>
+</tr>
+<tr>
+<td>🏫 Institution</td>
+<td><a href="https://esp.sn">ESP Maurtania</a></td>
+</tr>
+</table>
+
+## 📝 Changelog
+
+<details>
+<summary>Version 1.0.0 (2024-02-21)</summary>
+
+- ✨ Nouvelle interface responsive
+- 📝 Support Markdown complet
+- 🔌 Intégration API
+- 🎨 Système de formatage amélioré
+</details>
+
+---
+
+<div align="center">
+
+### Made with ❤️ for ESP Maurtania
+
+[⬆️ Retour en haut](#-espbot---assistant-virtuel-pour-lesp)
+
+</div>
