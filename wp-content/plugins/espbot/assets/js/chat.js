@@ -306,3 +306,117 @@ jQuery(document).ready(function($) {
 
     console.log('Chat initialized');
 });
+
+// Function to display message
+function displayMessage(message, isUser = false) {
+    const messageContainer = document.createElement('div');
+    messageContainer.className = `espbot-message ${isUser ? 'espbot-message-user' : 'espbot-message-bot'}`;
+
+    const messageContent = document.createElement('div');
+    messageContent.className = 'espbot-message-content';
+    
+    if (!isUser) {
+        // Pre-process the message to standardize markdown
+        let processedMessage = message
+            // Normalize line endings
+            .replace(/\r\n/g, '\n')
+            // Remove extra spaces
+            .replace(/[ \t]+/g, ' ')
+            // Handle single asterisks that aren't part of bold text
+            .replace(/(?<!\*)\*(?!\*)(?![^*]*\*\*)/g, '•')
+            // Handle double asterisks for bold text
+            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+            // Convert asterisk lists to dash lists
+            .replace(/^\*/gm, '-')
+            // Fix spacing around lists
+            .replace(/\n-/g, '\n\n-')
+            // Fix spacing after colons
+            .replace(/:\s*/g, ' : ')
+            // Clean up multiple spaces
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+
+        // Configure marked.js with CommonMark settings
+        marked.setOptions({
+            gfm: true,
+            breaks: true,
+            pedantic: false,
+            sanitize: false,
+            smartLists: true,
+            smartypants: true,
+            xhtml: true,
+            headerIds: false
+        });
+        
+        try {
+            // Parse markdown
+            let parsedContent = marked.parse(processedMessage, {
+                silent: true
+            });
+            
+            // Post-process the HTML
+            parsedContent = parsedContent
+                // Clean up any remaining asterisks
+                .replace(/\*/g, '•')
+                // Fix spacing around colons
+                .replace(/(\w+)\s*:/g, '$1 :')
+                // Clean up extra spaces
+                .replace(/\s{2,}/g, ' ')
+                // Fix bullet points
+                .replace(/[•*]/g, '•');
+            
+            messageContent.innerHTML = parsedContent;
+            
+            // Process list items
+            const listItems = messageContent.getElementsByTagName('li');
+            Array.from(listItems).forEach(li => {
+                // Clean up list item content
+                li.innerHTML = li.innerHTML
+                    .replace(/^\s+|\s+$/g, '')
+                    .replace(/\s{2,}/g, ' ')
+                    .replace(/(\w+)\s*:/g, '$1 :')
+                    .replace(/[•*]/g, '•');
+            });
+
+            // Process paragraphs
+            const paragraphs = messageContent.getElementsByTagName('p');
+            Array.from(paragraphs).forEach(p => {
+                // Clean up paragraph content
+                p.innerHTML = p.innerHTML
+                    .replace(/^\s+|\s+$/g, '')
+                    .replace(/\s{2,}/g, ' ')
+                    .replace(/[•*]/g, '•');
+
+                if (p.querySelector('strong') && !p.closest('li')) {
+                    p.style.marginTop = '16px';
+                    p.style.marginBottom = '8px';
+                }
+            });
+
+            // Clean up lists
+            const lists = messageContent.getElementsByTagName('ul');
+            Array.from(lists).forEach((ul, index, array) => {
+                if (index < array.length - 1) {
+                    ul.style.marginBottom = '16px';
+                }
+            });
+
+        } catch (error) {
+            console.error('Markdown parsing error:', error);
+            messageContent.textContent = message;
+        }
+    } else {
+        messageContent.textContent = message;
+    }
+
+    const timeElement = document.createElement('div');
+    timeElement.className = 'espbot-message-time';
+    timeElement.textContent = new Date().toLocaleTimeString();
+
+    messageContainer.appendChild(messageContent);
+    messageContainer.appendChild(timeElement);
+
+    const messagesContainer = document.querySelector('.espbot-chat-messages');
+    messagesContainer.appendChild(messageContainer);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}

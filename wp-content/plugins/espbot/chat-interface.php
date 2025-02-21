@@ -7,20 +7,31 @@
 function espbot_chat_interface() {
     ob_start();
     ?>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
     .espbot-chat-window {
         display: none;
         position: fixed;
         bottom: 90px;
         right: 20px;
-        width: 450px;
-        height: 600px;
+        width: min(450px, 95%);
+        height: min(600px, 85vh);
         background: #f5f5f5;
         border-radius: 10px;
         box-shadow: 0 5px 25px rgba(0,0,0,0.2);
         z-index: 9999;
         display: flex;
         flex-direction: column;
+        transition: all 0.3s ease;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    @supports not (width: min(450px, 95%)) {
+        .espbot-chat-window {
+            width: 95%;
+            max-width: 450px;
+        }
     }
 
     .espbot-chat-header {
@@ -56,40 +67,149 @@ function espbot_chat_interface() {
     .espbot-message-bot {
         float: left;
         align-items: flex-start;
+        padding-left: 45px;
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .espbot-message-bot::before {
+        content: "\f544"; /* Font Awesome robot icon unicode */
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 35px;
+        height: 35px;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #006400;
+        color: white;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .espbot-message-user {
         float: right;
         align-items: flex-end;
+        margin-bottom: 20px;
     }
 
     .espbot-message-content {
-        padding: 12px 15px;
+        padding: 15px 20px;
         border-radius: 15px;
         display: inline-block;
         max-width: 100%;
         word-wrap: break-word;
-        line-height: 1.5;
+        line-height: 1.6;
+        font-size: 15px;
+        position: relative;
+    }
+
+    .espbot-message-content p {
+        margin: 0;
+        padding: 0;
+    }
+
+    .espbot-message-content strong {
+        font-weight: 600;
+    }
+
+    .espbot-message-content ul {
+        margin: 8px 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .espbot-message-content ul:first-of-type {
+        margin-top: 16px;
+    }
+
+    .espbot-message-content ul:last-of-type {
+        margin-bottom: 0;
+    }
+
+    .espbot-message-content ul li {
+        position: relative;
+        padding-left: 20px;
+        margin: 8px 0;
+    }
+
+    .espbot-message-content ul li:first-child {
+        margin-top: 0;
+    }
+
+    .espbot-message-content ul li:last-child {
+        margin-bottom: 0;
+    }
+
+    .espbot-message-content ul li::before {
+        content: "•";
+        position: absolute;
+        left: 4px;
+        top: 0;
+        font-size: 15px;
+        line-height: 1.6;
     }
 
     .espbot-message-bot .espbot-message-content {
-        position: relative;
-        padding: 10px 15px;
-        padding-bottom: 30px;
-        border-radius: 15px;
         background: white;
-        border: 1px solid #fff;
-        display: inline-block;
-        max-width: 100%;
-        word-wrap: break-word;
-        line-height: 1.5;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        color: #333;
+        margin-left: 0;
     }
 
     .espbot-message-user .espbot-message-content {
         background: #006400;
         color: white;
-        border: none;
+    }
+
+    /* Headers and sections */
+    .espbot-message-content p strong {
+        display: block;
+        margin: 16px 0 8px 0;
+    }
+
+    .espbot-message-content p:first-child strong {
+        margin-top: 0;
+    }
+
+    /* Fix spacing between sections */
+    .espbot-message-content > p + ul,
+    .espbot-message-content > ul + p {
+        margin-top: 16px;
+    }
+
+    /* Ensure proper text wrapping */
+    .espbot-message-content ul li {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    /* Chat bubble arrows */
+    .espbot-message-bot .espbot-message-content::before {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 15px;
+        width: 0;
+        height: 0;
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        border-right: 8px solid white;
+    }
+
+    .espbot-message-user .espbot-message-content::before {
+        content: '';
+        position: absolute;
+        right: -8px;
+        top: 15px;
+        width: 0;
+        height: 0;
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        border-left: 8px solid #006400;
     }
 
     .espbot-message-time {
@@ -225,6 +345,96 @@ function espbot_chat_interface() {
         color: #28a745;
     }
 
+    /* Markdown Styles */
+    .espbot-message-content code {
+        background-color: rgba(0, 0, 0, 0.1);
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 0.9em;
+    }
+
+    .espbot-message-content pre {
+        background-color: rgba(0, 0, 0, 0.1);
+        padding: 10px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 10px 0;
+    }
+
+    .espbot-message-content pre code {
+        background-color: transparent;
+        padding: 0;
+    }
+
+    .espbot-message-content p {
+        margin: 0 0 10px 0;
+    }
+
+    .espbot-message-content p:last-child {
+        margin-bottom: 0;
+    }
+
+    .espbot-message-content ul, 
+    .espbot-message-content ol {
+        margin: 10px 0;
+        padding-left: 20px;
+    }
+
+    .espbot-message-content blockquote {
+        border-left: 3px solid #ddd;
+        margin: 10px 0;
+        padding-left: 10px;
+        color: #666;
+    }
+
+    .espbot-message-content a {
+        color: #0066cc;
+        text-decoration: underline;
+    }
+
+    .espbot-message-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+        margin: 10px 0;
+    }
+
+    .espbot-message-content table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 10px 0;
+    }
+
+    .espbot-message-content th,
+    .espbot-message-content td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .espbot-message-content th {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    /* Adjust colors for user messages */
+    .espbot-message-user .espbot-message-content code {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .espbot-message-user .espbot-message-content pre {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .espbot-message-user .espbot-message-content blockquote {
+        border-left-color: rgba(255, 255, 255, 0.3);
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .espbot-message-user .espbot-message-content a {
+        color: #ffffff;
+    }
+
     /* Scrollbar Styles */
     .espbot-chat-messages::-webkit-scrollbar {
         width: 6px;
@@ -241,6 +451,64 @@ function espbot_chat_interface() {
 
     .espbot-chat-messages::-webkit-scrollbar-thumb:hover {
         background: #666;
+    }
+
+    /* Responsive Design */
+    @media screen and (max-width: 768px) {
+        .espbot-chat-window {
+            right: 50%;
+            transform: translateX(50%);
+            bottom: 70px;
+        }
+        
+        .espbot-message {
+            max-width: 90%;
+            font-size: 14px;
+        }
+        
+        .espbot-chat-header {
+            -webkit-tap-highlight-color: transparent;
+        }
+    }
+    
+    @media screen and (max-width: 480px) {
+        .espbot-chat-window {
+            bottom: 60px;
+            height: 85vh;
+        }
+        
+        .espbot-chat-header {
+            padding: 10px;
+            height: 60px;
+        }
+        
+        .espbot-chat-input-area {
+            padding: 10px;
+            -webkit-appearance: none;
+        }
+        
+        .espbot-chat-input {
+            padding: 8px 12px;
+            font-size: 16px; /* Prevents iOS zoom on focus */
+        }
+        
+        .espbot-message {
+            max-width: 95%;
+        }
+        
+        /* Improve touch targets */
+        .espbot-chat-send {
+            min-width: 44px;
+            min-height: 44px;
+        }
+    }
+
+    /* Handle orientation changes */
+    @media screen and (orientation: landscape) and (max-height: 500px) {
+        .espbot-chat-window {
+            height: 90vh;
+            bottom: 10px;
+        }
     }
     </style>
 
