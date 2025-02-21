@@ -216,180 +216,71 @@ jQuery(document).ready(function($) {
         scrollToBottom();
     }
 
+    let currentSessionId = null;
+
+    // Function to send message
+    async function sendMessage() {
+        const message = userInput.val().trim();
+        if (message === '') return;
+
+        userInput.val('');
+        addUserMessage(message);
+
+        try {
+            const response = await sendMessageToBackend(message);
+            addBotMessage(response);
+        } catch (error) {
+            console.error('Error sending message:', error);
+            addBotMessage('Désolé, j\'ai rencontré une erreur. Veuillez réessayer plus tard.');
+        }
+    }
+
     // Function to send message to backend
-    async function sendMessageToBackend(message) {
+    async function sendMessageToBackend(userMessage) {
         showTypingIndicator();
         
         try {
-            // Special handling for "Bonjour"
-            if (message.toLowerCase().trim() === 'bonjour') {
-                hideTypingIndicator();
-                return "Bonjour ! Je suis ESPbot, l'assistant virtuel officiel de l'École Supérieure Polytechnique (ESP). Je suis là pour vous aider avec vos questions et vous fournir des informations précises et pertinentes sur l'ESP. Comment puis-je vous aider aujourd'hui ?";
-            }
-
             const response = await $.ajax({
                 url: espbotAjax.ajaxurl,
                 type: 'POST',
                 data: {
                     action: 'espbot_chat',
                     nonce: espbotAjax.nonce,
-                    message: message
+                    message: userMessage,
+                    session_id: currentSessionId
                 }
             });
 
             hideTypingIndicator();
 
             if (!response.success) {
-                console.error('Server error:', response.data?.error || 'Unknown error');
-                return response.data?.response || 'Désolé, j\'ai rencontré une erreur. Veuillez réessayer plus tard.';
+                throw new Error(response.data?.error || 'Unknown error');
             }
 
             const data = response.data;
-            if (data.error) {
-                console.error('API error:', data.error);
-                return 'Désolé, j\'ai rencontré une erreur. Veuillez réessayer plus tard.';
+            if (!data || !data.message) {
+                throw new Error('Invalid response format');
             }
 
-            // Process the response like Platform.sh site
-            if (data.context) {
-                // Extract key information
-                const info = extractKeyInformation(data.context);
-                
-                // Generate a natural response
-                return generateNaturalResponse(info, message);
+            // Update session ID if provided
+            if (data.session_id) {
+                currentSessionId = data.session_id;
             }
 
-            return 'Je suis désolé, je n\'ai pas trouvé d\'informations pertinentes pour votre question. Pouvez-vous reformuler votre question?';
+            return data.message;
 
         } catch (error) {
             hideTypingIndicator();
             console.error('Network error:', error);
-            return 'Désolé, j\'ai rencontré une erreur de connexion. Veuillez vérifier votre connexion et réessayer.';
+            throw error;
         }
     }
 
-    // Function to extract key information from context
-    function extractKeyInformation(context) {
-        // Remove metadata and formatting
-        let cleanContext = context
-            .replace(/Document Title:.*?\n/g, '')
-            .replace(/Chunk: \d+\n/g, '')
-            .replace(/High Relevancy:.*?\n/g, '')
-            .replace(/SUIVEZ-NOUS SUR.*$/gms, '')
-            .replace(/CONTACTEZ-NOUS.*$/gms, '')
-            .trim();
-
-        // Split into sections
-        const sections = cleanContext.split('Variation');
-        const mainContent = sections[0].trim();
-
-        // Extract key points
-        const keyPoints = [];
-        const lines = mainContent.split('\n');
-        
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-
-            // Capture dates and their associated content
-            if (/\d{1,2} [A-Za-zéû]+ \d{4}/.test(line)) {
-                const nextLine = lines[i + 1]?.trim();
-                if (nextLine && !nextLine.startsWith('*')) {
-                    keyPoints.push({
-                        date: line,
-                        content: nextLine
-                    });
-                }
-                continue;
-            }
-
-            // Capture bullet points
-            if (line.startsWith('*')) {
-                keyPoints.push({
-                    type: 'bullet',
-                    content: line.substring(1).trim()
-                });
-                continue;
-            }
-
-            // Capture regular content
-            if (line.length > 20 && !line.startsWith('Variation')) {
-                keyPoints.push({
-                    type: 'content',
-                    content: line
-                });
-            }
-        }
-
-        return keyPoints;
-    }
-
-    // Function to generate a natural response
-    function generateNaturalResponse(keyPoints, question) {
-        // Identify question type
-        const questionLower = question.toLowerCase();
-        let response = '';
-
-        // Check if it's about a specific date
-        if (questionLower.includes('quand') || /\d{4}/.test(questionLower)) {
-            const datePoints = keyPoints.filter(p => p.date);
-            if (datePoints.length > 0) {
-                response = datePoints.map(p => `<strong>${p.date}</strong>\n${p.content}`).join('\n\n');
-                return response;
-            }
-        }
-
-        // For general questions, combine relevant information
-        const relevantPoints = keyPoints.filter(p => 
-            p.type === 'content' || 
-            (p.content && p.content.toLowerCase().includes(questionLower.replace(/quand|est-ce|que|qui|comment|pourquoi/g, '').trim()))
-        );
-
-        if (relevantPoints.length > 0) {
-            response = relevantPoints.map(p => {
-                if (p.date) {
-                    return `<strong>${p.date}</strong>\n${p.content}`;
-                }
-                return p.content;
-            }).join('\n\n');
-        }
-
-        return response || 'Je suis désolé, je n\'ai pas trouvé d\'informations pertinentes pour votre question. Pouvez-vous reformuler votre question?';
-    }
-
-    // Function to handle message sending
-    async function sendMessage() {
-        const message = userInput.val().trim();
-        
-        if (message === '') {
-            return;
-        }
-
-        // Disable input and button while processing
-        userInput.prop('disabled', true);
-        sendButton.prop('disabled', true);
-
-        // Add user message to chat
-        addUserMessage(message);
-        userInput.val('');
-        scrollToBottom();
-
-        try {
-            // Get response from backend
-            const botResponse = await sendMessageToBackend(message);
-            
-            // Add bot response
-            addBotMessage(botResponse);
-        } catch (error) {
-            // Show error message
-            addBotMessage('Désolé, j\'ai rencontré une erreur. Veuillez réessayer plus tard.');
-        } finally {
-            // Re-enable input and button
-            userInput.prop('disabled', false);
-            sendButton.prop('disabled', false);
-            userInput.focus();
-            scrollToBottom();
-        }
+    // Function to start new chat
+    function startNewChat() {
+        currentSessionId = null;
+        chatMessages.empty();
+        addBotMessage("Bonjour ! Je suis ESPbot, l'assistant virtuel officiel de l'École Supérieure Polytechnique (ESP). Je suis là pour vous aider avec vos questions et vous fournir des informations précises et pertinentes sur l'ESP. Comment puis-je vous aider aujourd'hui ?");
     }
 
     // Event listeners
@@ -412,25 +303,6 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         startNewChat();
     });
-
-    // Function to start new chat
-    function startNewChat() {
-        // Get the welcome message
-        const welcomeMessage = chatMessages.find('.welcome-message');
-        
-        // Clear all messages
-        chatMessages.empty();
-        
-        // Re-add the welcome message
-        chatMessages.append(welcomeMessage);
-        
-        // Clear user input
-        userInput.val('');
-        // Focus on input
-        userInput.focus();
-        // Scroll to bottom
-        scrollToBottom();
-    }
 
     console.log('Chat initialized');
 });

@@ -298,7 +298,7 @@ function espbot_chat_interface() {
                 <!-- Welcome message -->
                 <div class="espbot-message espbot-message-bot welcome-message">
                     <div class="espbot-message-content">
-                        <p>👋 Bonjour! Je suis EspBot, votre assistant virtuel.</p>
+                        <p>👋 Bonjour! Je suis EspBot, l'assistant virtuel officiel de l'École Supérieure Polytechnique (ESP).</p>
                         <p class="subtitle">Comment puis-je vous aider aujourd'hui?</p>
                     </div>
                 </div>
@@ -353,239 +353,76 @@ add_action('wp_ajax_nopriv_espbot_chat', 'espbot_handle_chat_ajax');
 
 // Handle AJAX requests
 function espbot_handle_chat_ajax() {
-    // Check nonce for security
-    if (!check_ajax_referer('espbot_chat_nonce', 'nonce', false)) {
-        wp_send_json_error('Invalid security token');
-    }
+    // RAGFlow API configuration
+    $ragflow_endpoint = 'http://45.147.251.181';
+    $ragflow_api_key = 'ragflow-kzNWZlNWE0ZWZlMjExZWZiN2MxMjI2YT';
+    $agent_id = '418d0384efe111efac53226a81084050';
+
+    // Enable error logging
+    ini_set('log_errors', 1);
+    ini_set('error_log', dirname(__FILE__) . '/debug.log');
 
     $message = sanitize_text_field($_POST['message']);
+    $session_id = isset($_POST['session_id']) ? sanitize_text_field($_POST['session_id']) : null;
     
-    // First, try to connect to the service
-    $connect_response = wp_remote_post('https://main-bvxea6i-jvnjg77fkbzzi.eu-5.platformsh.site/api/connect', array(
-        'headers'     => array(
+    $request_url = "{$ragflow_endpoint}/api/v1/agents/{$agent_id}/completions";
+    
+    $request_body = array(
+        'question' => $message,
+        'stream' => false,
+        'session_id' => $session_id
+    );
+
+    // Make request to RAGFlow API
+    $response = wp_remote_post($request_url, array(
+        'headers' => array(
             'Content-Type' => 'application/json',
-            'Accept' => 'application/json'
+            'Authorization' => 'Bearer ' . $ragflow_api_key
         ),
-        'body'        => json_encode(array(
-            'credentials' => array(
-                'deployment' => 'Weaviate',
-                'url' => 'https://fuoh2jhszcblccxawdgg.c0.us-west3.gcp.weaviate.cloud',
-                'key' => ''
-            ),
-            'port' => ''
-        )),
-        'timeout'     => 45,
-        'sslverify'   => false
-    ));
-
-    if (is_wp_error($connect_response)) {
-        error_log('ESPBot Connect Error: ' . $connect_response->get_error_message());
-    } else {
-        error_log('ESPBot Connect Response: ' . wp_remote_retrieve_body($connect_response));
-    }
-
-    // Make request to FastAPI
-    $request_body = json_encode(array(
-        'query' => $message,
-        'RAG' => array(
-            'Reader' => array(
-                'selected' => 'Default',
-                'components' => array(
-                    'Default' => array(
-                        'name' => 'Default',
-                        'variables' => array(),
-                        'library' => array('pypdf', 'docx', 'spacy'),
-                        'description' => 'Ingests text, code, PDF, and DOCX files',
-                        'config' => (object)array(),
-                        'type' => 'FILE',
-                        'available' => true
-                    )
-                )
-            ),
-            'Chunker' => array(
-                'selected' => 'Token',
-                'components' => array(
-                    'Token' => array(
-                        'name' => 'Token',
-                        'variables' => array(),
-                        'library' => array(),
-                        'description' => 'Splits documents based on word tokens',
-                        'config' => (object)array(
-                            'Tokens' => array(
-                                'type' => 'number',
-                                'value' => 250,
-                                'description' => 'Choose how many Token per chunks',
-                                'values' => array()
-                            ),
-                            'Overlap' => array(
-                                'type' => 'number',
-                                'value' => 50,
-                                'description' => 'Choose how many Tokens should overlap between chunks',
-                                'values' => array()
-                            )
-                        ),
-                        'type' => '',
-                        'available' => true
-                    )
-                )
-            ),
-            'Embedder' => array(
-                'selected' => 'VoyageAI',
-                'components' => array(
-                    'VoyageAI' => array(
-                        'name' => 'VoyageAI',
-                        'variables' => array(),
-                        'library' => array(),
-                        'description' => 'Vectorizes documents and queries using VoyageAI',
-                        'config' => (object)array(
-                            'Model' => array(
-                                'type' => 'dropdown',
-                                'value' => 'voyage-multilingual-2',
-                                'description' => 'Select a VoyageAI Embedding Model',
-                                'values' => array('voyage-multilingual-2')
-                            ),
-                            'URL' => array(
-                                'type' => 'text',
-                                'value' => 'https://api.voyageai.com/v1',
-                                'description' => 'OpenAI API Base URL (if different from default)',
-                                'values' => array()
-                            )
-                        ),
-                        'type' => '',
-                        'available' => true
-                    )
-                )
-            ),
-            'Retriever' => array(
-                'selected' => 'Advanced',
-                'components' => array(
-                    'Advanced' => array(
-                        'name' => 'Advanced',
-                        'variables' => array(),
-                        'library' => array(),
-                        'description' => 'Retrieve relevant chunks from Weaviate',
-                        'config' => (object)array(
-                            'Search Mode' => array(
-                                'type' => 'dropdown',
-                                'value' => 'Hybrid Search',
-                                'description' => 'Switch between search types.',
-                                'values' => array('Hybrid Search')
-                            ),
-                            'Limit Mode' => array(
-                                'type' => 'dropdown',
-                                'value' => 'Autocut',
-                                'description' => 'Method for limiting the results',
-                                'values' => array('Autocut')
-                            ),
-                            'Limit/Sensitivity' => array(
-                                'type' => 'number',
-                                'value' => 1,
-                                'description' => 'Value for limiting the results',
-                                'values' => array()
-                            ),
-                            'Chunk Window' => array(
-                                'type' => 'number',
-                                'value' => 1,
-                                'description' => 'Number of surrounding chunks',
-                                'values' => array()
-                            ),
-                            'Threshold' => array(
-                                'type' => 'number',
-                                'value' => 80,
-                                'description' => 'Threshold score',
-                                'values' => array()
-                            ),
-                            'Suggestion' => array(
-                                'type' => 'bool',
-                                'value' => 1,
-                                'description' => 'Enable Autocomplete Suggestions',
-                                'values' => array()
-                            )
-                        ),
-                        'type' => '',
-                        'available' => true
-                    )
-                )
-            ),
-            'Generator' => array(
-                'selected' => 'Groq',
-                'components' => array(
-                    'Groq' => array(
-                        'name' => 'Groq',
-                        'variables' => array(),
-                        'library' => array(),
-                        'description' => "Generator using Groq's LPU inference engine",
-                        'config' => (object)array(
-                            'Model' => array(
-                                'type' => 'dropdown',
-                                'value' => 'llama-3.1-8b-instant',
-                                'description' => 'Select a Groq model',
-                                'values' => array('llama-3.1-8b-instant')
-                            ),
-                            'System Message' => array(
-                                'type' => 'textarea',
-                                'value' => "Vous êtes ESPbot, l'assistant virtuel officiel de l'École Supérieure Polytechnique (ESP). Votre mission est d'aider les étudiants, les professeurs et le personnel de l'ESP en fournissant des informations précises, pertinentes et utiles. Vous utilisez la technologie RAG (Retrieval-Augmented Generation) pour vous appuyer sur des sources fiables et vérifiées, telles que les documents, bases de données et ressources officielles de l'ESP. Vous devez toujours répondre de manière claire, concise et professionnelle en français.",
-                                'description' => 'System Message',
-                                'values' => array()
-                            )
-                        ),
-                        'type' => '',
-                        'available' => true
-                    )
-                )
-            )
-        ),
-        'labels' => array(),
-        'documentFilter' => array(),
-        'credentials' => array(
-            'deployment' => 'Weaviate',
-            'url' => 'https://fuoh2jhszcblccxawdgg.c0.us-west3.gcp.weaviate.cloud',
-            'key' => ''
-        )
-    ));
-
-    // Log the request and query
-    error_log('ESPBot Query: ' . $message);
-    error_log('ESPBot Request to FastAPI: ' . $request_body);
-
-    // FastAPI endpoint
-    $api_url = 'https://main-bvxea6i-jvnjg77fkbzzi.eu-5.platformsh.site/api/query';
-
-    error_log('ESPBot Attempting to connect to: ' . $api_url);
-
-    $response = wp_remote_post($api_url, array(
-        'headers'     => array(
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'
-        ),
-        'body'        => $request_body,
-        'timeout'     => 45,
-        'sslverify'   => false
+        'body' => json_encode($request_body),
+        'timeout' => 45,
+        'sslverify' => false
     ));
 
     if (is_wp_error($response)) {
-        error_log('ESPBot Error: ' . $response->get_error_message());
         wp_send_json_error(array(
-            'response' => 'Désolé, j\'ai rencontré une erreur. Veuillez réessayer plus tard.',
-            'error' => $response->get_error_message()
+            'error' => $response->get_error_message(),
+            'response' => 'Désolé, j\'ai rencontré une erreur. Veuillez réessayer plus tard.'
         ));
         return;
     }
 
-    $response_code = wp_remote_retrieve_response_code($response);
-    $response_body = wp_remote_retrieve_body($response);
-    error_log('ESPBot Response Code: ' . $response_code);
-    error_log('ESPBot Response Body: ' . $response_body);
-
-    $data = json_decode($response_body, true);
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        error_log('ESPBot JSON Error: ' . json_last_error_msg());
+    $response_data = json_decode(wp_remote_retrieve_body($response), true);
+    
+    if (json_last_error() !== JSON_ERROR_NONE || !isset($response_data['data']['answer'])) {
         wp_send_json_error(array(
-            'response' => 'Désolé, j\'ai reçu une réponse invalide. Veuillez réessayer.',
-            'error' => 'JSON decode error: ' . json_last_error_msg()
+            'error' => 'Invalid response from RAGFlow',
+            'response' => 'Désolé, j\'ai rencontré une erreur. Veuillez réessayer plus tard.'
         ));
         return;
     }
 
-    wp_send_json_success($data);
+    // Get the answer and translate common English responses to French
+    $answer = $response_data['data']['answer'];
+    
+    // Translate common English responses to French
+    $english_to_french = array(
+        "Hi! I'm your smart assistant" => "Bonjour ! Je suis ESPbot, l'assistant virtuel officiel de l'École Supérieure Polytechnique (ESP).",
+        "What can I do for you?" => "Comment puis-je vous aider aujourd'hui ?",
+        "I'm here to help" => "Je suis là pour vous aider.",
+        "I don't understand" => "Je ne comprends pas votre question. Pourriez-vous la reformuler ?",
+        "Could you please rephrase" => "Pourriez-vous reformuler votre question ?"
+    );
+
+    foreach ($english_to_french as $english => $french) {
+        if (stripos($answer, $english) !== false) {
+            $answer = str_replace($english, $french, $answer);
+        }
+    }
+
+    wp_send_json_success(array(
+        'message' => $answer,
+        'session_id' => $response_data['data']['session_id'] ?? null,
+        'timestamp' => current_time('mysql')
+    ));
 }
