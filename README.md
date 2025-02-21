@@ -15,7 +15,7 @@
 
 *Un chatbot intelligent pour l'École Supérieure Polytechnique (ESP)*
 
-[🌐 Demo](https://esp.sn) | [📚 Documentation](#documentation) | [🚀 Installation](#installation) | [💬 Contact](#-contact)
+ [📚 Documentation](#documentation) | [🚀 Installation](#installation) | [💬 Contact](#-contact)
 
 </div>
 
