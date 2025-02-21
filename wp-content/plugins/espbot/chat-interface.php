@@ -8,58 +8,43 @@ function espbot_chat_interface() {
     ob_start();
     ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=1">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it-container/3.0.0/markdown-it-container.min.js"></script>
     <script>
-    // Initialize Showdown converter with specific options for asterisk handling
-    const converter = new showdown.Converter({
-        simpleLineBreaks: true,
-        literalMidWordUnderscores: true,
-        literalMidWordAsterisks: false,
-        strikethrough: true,
-        tables: true,
-        tasklists: true,
-        smartIndentationFix: true,
-        disableForced4SpacesIndentedSublists: false,
-        parseImgDimensions: true,
-        simplifiedAutoLink: true,
-        extensions: [
-            {
-                type: 'lang',
-                regex: /^\s*\* /gm,
-                replace: function(match) {
-                    // Count leading spaces to determine nesting level
-                    const spaces = match.match(/^\s*/)[0].length;
-                    return '    '.repeat(Math.floor(spaces/4)) + '- ';
-                }
-            },
-            {
-                type: 'output',
-                regex: /<ul>/g,
-                replace: '<ul class="md-list">'
-            },
-            {
-                type: 'output',
-                regex: /<li>/g,
-                replace: '<li class="md-list-item">'
-            },
-            {
-                type: 'output',
-                regex: /<strong>/g,
-                replace: '<strong class="md-bold">'
-            }
-        ]
+    // Initialize markdown-it with better options for lists
+    const md = window.markdownit({
+        html: true,
+        linkify: true,
+        typographer: true,
+        breaks: true
     });
 
-    // Add custom extension for better bold text handling
-    showdown.extension('customBold', {
-        type: 'lang',
-        regex: /\*\*([^*]+)\*\*/g,
-        replace: function(match, content) {
-            return '<strong class="md-bold">' + content + '</strong>';
-        }
-    });
+    // Add custom renderer rules
+    const defaultRender = md.renderer.rules.text;
+    md.renderer.rules.text = function (tokens, idx, options, env, self) {
+        let text = tokens[idx].content;
+        
+        // Handle bold text with double asterisks
+        text = text.replace(/\*\*([^*]+)\*\*/g, '<strong class="md-bold">$1</strong>');
+        
+        // Clean up any remaining asterisks that aren't part of bold text
+        text = text.replace(/(?<!\*)\*(?!\*)/g, '•');
+        
+        tokens[idx].content = text;
+        return defaultRender(tokens, idx, options, env, self);
+    };
 
-    converter.useExtension('customBold');
+    // Custom list rendering
+    md.renderer.rules.list_item_open = function () {
+        return '<li class="md-list-item">';
+    };
+
+    md.renderer.rules.bullet_list_open = function () {
+        return '<ul class="md-list">';
+    };
+
+    // Custom container plugin for better spacing
+    md.use(require('markdown-it-container'));
     </script>
 
     <style>
@@ -480,24 +465,6 @@ function espbot_chat_interface() {
         background-color: rgba(0, 0, 0, 0.05);
     }
 
-    /* Adjust colors for user messages */
-    .espbot-message-user .espbot-message-content code {
-        background-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .espbot-message-user .espbot-message-content pre {
-        background-color: rgba(255, 255, 255, 0.1);
-    }
-
-    .espbot-message-user .espbot-message-content blockquote {
-        border-left-color: rgba(255, 255, 255, 0.3);
-        color: rgba(255, 255, 255, 0.8);
-    }
-
-    .espbot-message-user .espbot-message-content a {
-        color: #ffffff;
-    }
-
     /* Enhanced markdown styles */
     .espbot-message-content {
         font-size: 15px;
@@ -507,11 +474,13 @@ function espbot_chat_interface() {
 
     .espbot-message-content .md-list {
         margin: 8px 0 !important;
-        padding-left: 20px !important;
+        padding-left: 24px !important;
+        list-style-type: disc !important;
     }
 
     .espbot-message-content .md-list .md-list {
-        margin: 4px 0 4px 0 !important;
+        margin: 4px 0 !important;
+        list-style-type: circle !important;
     }
 
     .espbot-message-content .md-list-item {
@@ -524,8 +493,23 @@ function espbot_chat_interface() {
     .espbot-message-content .md-bold {
         font-weight: 600;
         color: inherit;
-        display: inline-block;
-        margin-right: 2px;
+        display: inline;
+    }
+
+    /* Force proper list styling */
+    .espbot-message-content ul {
+        list-style-type: disc !important;
+        padding-left: 24px !important;
+        margin: 8px 0 !important;
+    }
+
+    .espbot-message-content li {
+        display: list-item !important;
+        margin: 6px 0 !important;
+    }
+
+    .espbot-message-content li::marker {
+        color: #666 !important;
     }
 
     /* Remove any custom bullets */

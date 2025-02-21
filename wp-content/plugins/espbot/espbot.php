@@ -1,13 +1,13 @@
 <?php
 /*
-Plugin Name: EspBot Chat
-Plugin URI: https://espbot.com
-Description: A chatbot plugin for WordPress
+Plugin Name: ESPBot
+Description: A chatbot plugin wordpress for Esp Maurtanie
 Version: 1.0.0
-Author: ESP Mauritanie
-Author URI: https://espmauritanie.com
-License: GPL v2 or later
-License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Author: Ahmed Abd Dayme (AhmedBouha)
+Author URI: https://github.com/ahmedabddayme3752
+Text Domain: espbot
+Domain Path: /languages
+License: Proprietary
 */
 
 // Exit if accessed directly

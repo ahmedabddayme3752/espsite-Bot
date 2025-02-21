@@ -323,57 +323,35 @@ function displayMessage(message, isUser = false) {
                 .replace(/\r\n/g, '\n')
                 // Ensure proper spacing after colons in bold text
                 .replace(/\*\*([^*]+):\*\*/g, '**$1 :**')
-                // Handle nested lists by preserving indentation
-                .replace(/^(\s*)\*/gm, function(match, spaces) {
-                    return spaces + '-';
-                })
+                // Handle list items
+                .replace(/^\*/gm, '*')
                 // Clean up extra spaces (but preserve indentation)
-                .replace(/([^\s])\s{2,}([^\s])/g, '$1 $2')
+                .replace(/([^\n])\s{2,}([^\s])/g, '$1 $2')
                 .trim();
 
-            // Convert markdown to HTML
-            const html = converter.makeHtml(processedMessage);
+            // Convert markdown to HTML using markdown-it
+            const html = md.render(processedMessage);
             
             // Create temporary div for processing
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = html;
 
-            // Process nested lists
+            // Process lists and spacing
             const lists = tempDiv.querySelectorAll('ul');
             lists.forEach(list => {
-                // Add proper classes
                 list.classList.add('md-list');
-                
-                // Process list items
                 const items = list.querySelectorAll('li');
                 items.forEach(item => {
                     item.classList.add('md-list-item');
-                    
-                    // Fix spacing after bold text with colons
-                    const boldElements = item.querySelectorAll('.md-bold');
-                    boldElements.forEach(bold => {
-                        if (bold.textContent.endsWith(':')) {
-                            const space = document.createTextNode(' ');
-                            bold.parentNode.insertBefore(space, bold.nextSibling);
-                        }
-                    });
-                });
-
-                // Handle nested lists specifically
-                const nestedLists = list.querySelectorAll('ul');
-                nestedLists.forEach(nested => {
-                    nested.classList.add('md-list');
                 });
             });
 
-            // Clean up any remaining asterisks
-            const textNodes = tempDiv.getElementsByTagName('*');
-            Array.from(textNodes).forEach(node => {
-                if (node.childNodes.length === 1 && node.childNodes[0].nodeType === 3) {
-                    node.textContent = node.textContent
-                        .replace(/\*\*/g, '')
-                        .replace(/\*/g, '')
-                        .trim();
+            // Fix spacing after bold text with colons
+            const boldElements = tempDiv.querySelectorAll('.md-bold');
+            boldElements.forEach(bold => {
+                if (bold.textContent.endsWith(':')) {
+                    const space = document.createTextNode(' ');
+                    bold.parentNode.insertBefore(space, bold.nextSibling);
                 }
             });
 
