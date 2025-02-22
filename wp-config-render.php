@@ -4,8 +4,10 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // ** PostgreSQL for WordPress configuration ** //
+if (!defined('DB_TYPE')) {
+    define('DB_TYPE', 'pgsql');
+}
 define('DB_DRIVER', 'pgsql');
-define('DB_TYPE', 'pgsql');
 
 // Set up pg4wp
 define('PG4WP_ROOT', __DIR__ . '/wp-content/plugins/pg4wp');
@@ -44,17 +46,26 @@ if ($url === false) {
 define('DB_NAME', ltrim($url['path'], '/'));
 define('DB_USER', $url['user']);
 define('DB_PASSWORD', $url['pass']);
-define('DB_HOST', $url['host'] . (isset($url['port']) ? ':' . $url['port'] : ''));
+define('DB_HOST', $url['host'] . ':' . ($url['port'] ?? '5432'));
 
-// PostgreSQL settings
-define('DB_TYPE', 'pgsql');
+// PostgreSQL connection settings
 define('DB_CHARSET', 'utf8');
 define('DB_COLLATE', '');
-
-// Enable SSL for PostgreSQL
 define('DB_SSL', true);
 define('DB_SSLMODE', 'require');
 define('DB_SSL_CA', '/etc/ssl/certs/ca-certificates.crt');
+
+// Temporary connection test
+$conn = new PDO(
+    "pgsql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";sslmode=require",
+    DB_USER,
+    DB_PASSWORD,
+    [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::PGSQL_ATTR_SSL_MODE => PDO::PGSQL_SSL_MODE_REQUIRE
+    ]
+);
+echo "<!-- Connection successful! -->";
 
 // Authentication Unique Keys and Salts
 define('AUTH_KEY',         getenv('WORDPRESS_AUTH_KEY') ?: bin2hex(random_bytes(32)));
@@ -84,8 +95,8 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROT
     $_SERVER['HTTPS'] = 'on';
 }
 
-define('WP_HOME', 'https://' . $_SERVER['HTTP_HOST']);
-define('WP_SITEURL', 'https://' . $_SERVER['HTTP_HOST']);
+define('WP_HOME', 'https://espbot.onrender.com');
+define('WP_SITEURL', WP_HOME);
 
 if (!defined('ABSPATH')) {
     define('ABSPATH', dirname(__FILE__) . '/');
