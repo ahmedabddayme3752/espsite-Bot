@@ -49,6 +49,8 @@ if ($database_url) {
     define('DB_HOST', getenv('WORDPRESS_DB_HOST') . ':' . (getenv('WORDPRESS_DB_PORT') ?: '5432'));
 }
 
+define('DB_DRIVER', 'pgsql');
+define('DB_TYPE', 'pgsql');
 // PostgreSQL SSL configuration
 define('DB_SSL', true);
 define('DB_SSLMODE', 'require');
