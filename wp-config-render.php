@@ -47,7 +47,20 @@ define('DB_NAME', ltrim($url['path'], '/'));
 define('DB_USER', $url['user']);
 define('DB_PASSWORD', $url['pass']);
 $host = $url['host'] . '.oregon-postgres.render.com';
-define('DB_HOST', $host . ':' . ($url['port'] ?? '5432'));
+$port = $url['port'] ?? 5432;
+define('DB_HOST', $host);
+define('DB_PORT', $port);
+
+if (!filter_var(gethostbyname($host), FILTER_VALIDATE_IP)) {
+    die("DNS resolution failed for: $host");
+}
+
+$ip = gethostbyname($host);
+$socket = @fsockopen($ip, 5432, $errno, $errstr, 5);
+if (!$socket) {
+    die("Connection failed to $ip:5432 - $errstr");
+}
+fclose($socket);
 
 // PostgreSQL connection settings
 define('DB_CHARSET', 'utf8');
@@ -57,8 +70,9 @@ define('DB_SSLMODE', 'require');
 define('DB_SSLROOTCERT', '/etc/ssl/certs/ca-certificates.crt');
 
 // Temporary connection test
+error_log("Connecting to PostgreSQL at: pgsql:host=$host;port=$port;dbname=".DB_NAME);
 $conn = new PDO(
-    "pgsql:host=".DB_HOST.";dbname=".DB_NAME.";sslmode=require",
+    "pgsql:host=$host;port=$port;dbname=".DB_NAME.";sslmode=require",
     DB_USER,
     DB_PASSWORD,
     [
@@ -87,6 +101,7 @@ define('WP_DEBUG_DISPLAY', true);
 // Enable error logging
 error_log("Database connection details:");
 error_log("DB_HOST: " . DB_HOST);
+error_log("DB_PORT: " . DB_PORT);
 error_log("DB_USER: " . DB_USER);
 error_log("DB_NAME: " . DB_NAME);
 
