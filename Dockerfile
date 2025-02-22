@@ -123,6 +123,9 @@ RUN chown -R www-data:www-data /var/www/html && \
 RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf && \
     sed -i 's/:80/:${PORT}/g' /etc/apache2/sites-available/000-default.conf
 
+# Add Apache directory index configuration
+RUN echo 'DirectoryIndex index.php index.html' >> /etc/apache2/mods-available/dir.conf
+
 EXPOSE ${PORT}
 
 CMD ["/usr/local/bin/start.sh"]
