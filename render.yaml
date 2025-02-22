@@ -23,10 +23,21 @@ services:
       - key: WORDPRESS_CONFIG_EXTRA
         value: |
           define('FORCE_SSL_ADMIN', true);
+          define('WP_MEMORY_LIMIT', '256M');
           if ($_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
             $_SERVER['HTTPS'] = 'on';
+            define('FORCE_SSL_ADMIN', true);
+            define('FORCE_SSL_LOGIN', true);
           }
+      - key: WP_DEBUG
+        value: "false"
+      - key: WP_CACHE
+        value: "true"
     disk:
       name: wordpress-data
-      mountPath: /var/www/html/wp-content/uploads
-      sizeGB: 1
+      mountPath: /var/www/html
+      sizeGB: 10
+    healthCheckPath: /
+    numInstances: 1
+    domains:
+      - espbot.onrender.com
