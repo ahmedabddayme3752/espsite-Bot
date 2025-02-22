@@ -24,7 +24,7 @@ EOF
 
 # Enable Apache modules
 RUN a2enmod rewrite headers && \
-    a2dismod autoindex && \
+    a2dismod -f autoindex && \
     echo 'ServerName localhost' >> /etc/apache2/apache2.conf
 
 # Create WordPress directory
