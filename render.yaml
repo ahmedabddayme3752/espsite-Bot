@@ -18,18 +18,20 @@ services:
         value: 10000
       - key: WORDPRESS_DB_HOST
         value: dpg-cusvgi0gph6c73atsci0-a.ohio-postgres.render.com
+      - key: WORDPRESS_DB_PORT
+        value: "5432"
       - key: WORDPRESS_DB_USER
         value: wordpress_ygs8_user
       - key: WORDPRESS_DB_NAME
         value: wordpress_ygs8
       - key: WORDPRESS_DB_PASSWORD
         sync: false
-      - key: WORDPRESS_DEBUG
-        value: "true"
       - key: WORDPRESS_CONFIG_EXTRA
         value: |
-          define('WP_HOME', 'https://' . $_SERVER['HTTP_HOST']);
-          define('WP_SITEURL', 'https://' . $_SERVER['HTTP_HOST']);
+          define('FORCE_SSL_ADMIN', true);
+          if ($_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
+            $_SERVER['HTTPS'] = 'on';
+          }
     disk:
       name: wordpress-data
       mountPath: /var/www/html/wp-content/uploads

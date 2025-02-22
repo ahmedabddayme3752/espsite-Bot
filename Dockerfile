@@ -54,7 +54,7 @@ cat > wp-config.php << EOL\n\
 define( "DB_NAME", getenv("WORDPRESS_DB_NAME") );\n\
 define( "DB_USER", getenv("WORDPRESS_DB_USER") );\n\
 define( "DB_PASSWORD", getenv("WORDPRESS_DB_PASSWORD") );\n\
-define( "DB_HOST", getenv("WORDPRESS_DB_HOST") );\n\
+define( "DB_HOST", getenv("WORDPRESS_DB_HOST") . ":5432?sslmode=verify-full&sslrootcert=/etc/ssl/certs/ca-certificates.crt" );\n\
 define( "DB_CHARSET", "utf8" );\n\
 define( "DB_COLLATE", "" );\n\
 \n\
@@ -93,7 +93,7 @@ echo "DB_NAME: $WORDPRESS_DB_NAME"\n\
 max_retries=30\n\
 counter=0\n\
 \n\
-until PGPASSWORD=$WORDPRESS_DB_PASSWORD psql -h "$WORDPRESS_DB_HOST" -U "$WORDPRESS_DB_USER" -d "$WORDPRESS_DB_NAME" -c "\\q" 2>/dev/null; do\n\
+until PGPASSWORD=$WORDPRESS_DB_PASSWORD psql -h "$WORDPRESS_DB_HOST" -p "$WORDPRESS_DB_PORT" -U "$WORDPRESS_DB_USER" -d "$WORDPRESS_DB_NAME" -c "\\q" 2>/dev/null; do\n\
     counter=$((counter+1))\n\
     if [ $counter -gt $max_retries ]; then\n\
         echo "Failed to connect to database after $max_retries attempts"\n\
