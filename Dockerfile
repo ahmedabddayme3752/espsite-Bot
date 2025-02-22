@@ -120,7 +120,8 @@ RUN apt-get update && apt-get install -y \
     && update-ca-certificates
 
 # Persistent DNS configuration
-RUN mkdir -p /etc/resolvconf/resolv.conf.d && \
+RUN apt-get update && apt-get install -y resolvconf && \
+    mkdir -p /etc/resolvconf/resolv.conf.d && \
     echo "nameserver 8.8.8.8" > /etc/resolvconf/resolv.conf.d/base && \
     echo "nameserver 1.1.1.1" >> /etc/resolvconf/resolv.conf.d/base && \
     resolvconf -u
