@@ -119,15 +119,11 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo pdo_pgsql \
     && update-ca-certificates
 
-# DNS configuration
-RUN rm -f /etc/resolv.conf && \
-    echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
-    echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-
-# Final DNS configuration
-RUN apt-get update && \
-    apt-get install -y dnsutils && \
-    nslookup dpg-cusvgi0gph6c73atsci0-a.oregon-postgres.render.com
+# Install system dependencies and PHP extensions
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql \
+    && update-ca-certificates
 
 # Set the default command
-CMD ["sh", "-c", "nslookup dpg-cusvgi0gph6c73atsci0-a.oregon-postgres.render.com && apache2-foreground"]
+CMD ["sh", "-c", "apache2-foreground"]
