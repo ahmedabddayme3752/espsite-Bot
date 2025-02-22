@@ -3,7 +3,6 @@ databases:
     plan: free
     type: postgres
     region: ohio
-    databaseName: wordpress
 
 services:
   - type: web
@@ -17,27 +16,25 @@ services:
     envVars:
       - key: PORT
         value: 10000
-      - key: DATABASE_URL
+      - key: WORDPRESS_DB_HOST
         fromDatabase:
           name: wordpress-db
-          property: connectionString
+          property: host
+      - key: WORDPRESS_DB_USER
+        fromDatabase:
+          name: wordpress-db
+          property: user
+      - key: WORDPRESS_DB_PASSWORD
+        fromDatabase:
+          name: wordpress-db
+          property: password
+      - key: WORDPRESS_DB_NAME
+        fromDatabase:
+          name: wordpress-db
+          property: database
       - key: WORDPRESS_DEBUG
         value: "true"
     disk:
       name: wordpress-data
       mountPath: /var/www/html/wp-content/uploads
       sizeGB: 1
-
-  - type: pserv
-    name: wordpress-db
-    env: docker
-    plan: free
-    region: ohio
-    image: postgres:15-alpine
-    envVars:
-      - key: POSTGRES_DB
-        value: wordpress
-      - key: POSTGRES_USER
-        value: wordpress
-      - key: POSTGRES_PASSWORD
-        generateValue: true
