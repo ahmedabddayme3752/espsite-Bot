@@ -32,31 +32,29 @@ require_once(PG4WP_ROOT . '/db.php');
 
 // Parse database URL for Render
 $database_url = getenv('DATABASE_URL');
-if ($database_url) {
-    // Use the DATABASE_URL if provided (internal connection)
-    $url = parse_url($database_url);
-    define('DB_NAME', ltrim($url['path'], '/'));
-    define('DB_USER', $url['user']);
-    define('DB_PASSWORD', $url['pass']);
-    define('DB_HOST', $url['host'] . ':' . ($url['port'] ?? '5432') . '?sslmode=require');
-} else {
-    // Fallback to individual environment variables
-    define('DB_NAME', getenv('WORDPRESS_DB_NAME'));
-    define('DB_USER', getenv('WORDPRESS_DB_USER'));
-    define('DB_PASSWORD', getenv('WORDPRESS_DB_PASSWORD'));
-    define('DB_HOST', getenv('WORDPRESS_DB_HOST') . ':' . (getenv('WORDPRESS_DB_PORT') ?: '5432') . '?sslmode=require');
+if (!$database_url) {
+    die('DATABASE_URL environment variable is not set');
 }
 
-// PostgreSQL database type
-define('DB_TYPE', 'pgsql');
+$url = parse_url($database_url);
+if ($url === false) {
+    die('Failed to parse DATABASE_URL');
+}
 
-// PostgreSQL SSL configuration
+define('DB_NAME', ltrim($url['path'], '/'));
+define('DB_USER', $url['user']);
+define('DB_PASSWORD', $url['pass']);
+define('DB_HOST', $url['host'] . (isset($url['port']) ? ':' . $url['port'] : ''));
+
+// PostgreSQL settings
+define('DB_TYPE', 'pgsql');
+define('DB_CHARSET', 'utf8');
+define('DB_COLLATE', '');
+
+// Enable SSL for PostgreSQL
 define('DB_SSL', true);
 define('DB_SSLMODE', 'require');
 define('DB_SSL_CA', '/etc/ssl/certs/ca-certificates.crt');
-
-define('DB_CHARSET', 'utf8');
-define('DB_COLLATE', '');
 
 // Authentication Unique Keys and Salts
 define('AUTH_KEY',         getenv('WORDPRESS_AUTH_KEY') ?: bin2hex(random_bytes(32)));

@@ -20,26 +20,6 @@ services:
         fromDatabase:
           name: wordpress-db
           property: connectionString
-      - key: WORDPRESS_DB_HOST
-        fromDatabase:
-          name: wordpress-db
-          property: host
-      - key: WORDPRESS_DB_PORT
-        fromDatabase:
-          name: wordpress-db
-          property: port
-      - key: WORDPRESS_DB_USER
-        fromDatabase:
-          name: wordpress-db
-          property: user
-      - key: WORDPRESS_DB_NAME
-        fromDatabase:
-          name: wordpress-db
-          property: database
-      - key: WORDPRESS_DB_PASSWORD
-        fromDatabase:
-          name: wordpress-db
-          property: password
       - key: WORDPRESS_CONFIG_EXTRA
         value: |
           define('FORCE_SSL_ADMIN', true);

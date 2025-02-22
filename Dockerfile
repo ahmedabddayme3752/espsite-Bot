@@ -44,15 +44,18 @@ RUN a2enmod rewrite headers && \
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf && \
     sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
-# Configure Apache to listen on PORT environment variable
-RUN echo "Listen ${PORT}" > /etc/apache2/ports.conf && \
-    sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/sites-available/000-default.conf
+# Configure Apache virtual host
+RUN sed -i 's/VirtualHost \*:80/VirtualHost *:${PORT}/g' /etc/apache2/sites-available/000-default.conf
 
 # Make port configurable
 ENV PORT=10000
 
 # Expose the port
 EXPOSE ${PORT}
+
+# Configure Apache to listen on PORT environment variable
+RUN echo "Listen ${PORT}" > /etc/apache2/ports.conf && \
+    sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/sites-available/000-default.conf
 
 # Set working directory
 WORKDIR /var/www/html
@@ -76,11 +79,13 @@ COPY wp-config-render.php /var/www/html/wp-config.php
 # Configure Apache for proper port binding
 RUN sed -i 's/ServerName localhost/ServerName 0.0.0.0/g' /etc/apache2/apache2.conf
 
-# Create start script
+# Create start script with proper port configuration
 RUN echo '#!/bin/bash\n\
-echo "Starting Apache on port ${PORT}"\n\
-apache2-foreground' > /usr/local/bin/start.sh && \
-    chmod +x /usr/local/bin/start.sh
+echo "Configuring Apache port..."\n\
+echo "Listen \$PORT" > /etc/apache2/ports.conf\n\
+echo "Starting Apache on port \$PORT"\n\
+exec apache2-foreground' > /usr/local/bin/start.sh && \
+chmod +x /usr/local/bin/start.sh
 
 # Create debug script
 RUN echo '#!/bin/bash\n\
