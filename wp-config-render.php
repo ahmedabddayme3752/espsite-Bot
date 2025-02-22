@@ -60,6 +60,31 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROT
 define('WP_HOME', 'https://' . $_SERVER['HTTP_HOST']);
 define('WP_SITEURL', 'https://' . $_SERVER['HTTP_HOST']);
 
+// ** PostgreSQL for WordPress configuration ** //
+
+// Enable pg4wp
+define('DB_DRIVER', 'pgsql');
+define('DB_TYPE', 'pgsql');
+
+// Include pg4wp
+define('PG4WP_ROOT', dirname(__FILE__) . '/wp-content/plugins/pg4wp');
+if (!defined('PG4WP_ROOT')) {
+    define('PG4WP_ROOT', dirname(__FILE__) . '/wp-content/plugins/pg4wp');
+}
+
+if (defined('PG4WP_ROOT') && file_exists(PG4WP_ROOT . '/db.php')) {
+    require_once(PG4WP_ROOT . '/db.php');
+} else {
+    // Download pg4wp if not present
+    if (!file_exists(dirname(__FILE__) . '/wp-content/plugins/pg4wp')) {
+        mkdir(dirname(__FILE__) . '/wp-content/plugins/pg4wp', 0755, true);
+        $pg4wp_url = 'https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/db.php';
+        $pg4wp_content = file_get_contents($pg4wp_url);
+        file_put_contents(dirname(__FILE__) . '/wp-content/plugins/pg4wp/db.php', $pg4wp_content);
+    }
+    require_once(dirname(__FILE__) . '/wp-content/plugins/pg4wp/db.php');
+}
+
 if (!defined('ABSPATH')) {
     define('ABSPATH', dirname(__FILE__) . '/');
 }

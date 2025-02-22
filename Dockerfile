@@ -49,6 +49,8 @@ WORKDIR /var/www/html
 RUN curl -O https://wordpress.org/latest.tar.gz && \
     tar -xvf latest.tar.gz --strip-components=1 && \
     rm latest.tar.gz && \
+    mkdir -p wp-content/plugins/pg4wp && \
+    curl -o wp-content/plugins/pg4wp/db.php https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/db.php && \
     chown -R www-data:www-data . && \
     find . -type d -exec chmod 755 {} \; && \
     find . -type f -exec chmod 644 {} \;
