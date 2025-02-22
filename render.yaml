@@ -1,8 +1,15 @@
+databases:
+  - name: wordpress-db
+    plan: free
+    databaseName: wordpress
+    ipAllowList: []
+
 services:
   - type: web
     name: wordpress
     env: docker
     plan: free
+    region: ohio
     buildCommand: docker build -t wordpress-app .
     startCommand: /usr/local/bin/start.sh
     healthCheckPath: /
@@ -34,25 +41,13 @@ services:
         value: "true"
       - key: WP_ENV
         value: "production"
-      - key: WORDPRESS_AUTH_KEY
-        generateValue: true
-      - key: WORDPRESS_SECURE_AUTH_KEY
-        generateValue: true
-      - key: WORDPRESS_LOGGED_IN_KEY
-        generateValue: true
-      - key: WORDPRESS_NONCE_KEY
-        generateValue: true
-      - key: WORDPRESS_AUTH_SALT
-        generateValue: true
-      - key: WORDPRESS_SECURE_AUTH_SALT
-        generateValue: true
-      - key: WORDPRESS_LOGGED_IN_SALT
-        generateValue: true
-      - key: WORDPRESS_NONCE_SALT
-        generateValue: true
-
-databases:
-  - name: wordpress-db
-    plan: free
-    databaseName: wordpress
-    ipAllowList: []
+      - key: WORDPRESS_CONFIG_EXTRA
+        value: |
+          define('WP_HOME', 'https://' . $_SERVER['HTTP_HOST']);
+          define('WP_SITEURL', 'https://' . $_SERVER['HTTP_HOST']);
+          define('FORCE_SSL_ADMIN', true);
+          $_SERVER['HTTPS'] = 'on';
+    disk:
+      name: wordpress-data
+      mountPath: /var/www/html/wp-content/uploads
+      sizeGB: 1

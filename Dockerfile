@@ -8,11 +8,19 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && docker-php-ext-install zip pdo pdo_pgsql pgsql
 
+# Create PHP configuration directories
+RUN mkdir -p /usr/local/etc/php/conf.d
+
 # Configure PHP
-RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/uploads.ini && \
-    echo "post_max_size = 64M" >> /usr/local/etc/php/conf.d/uploads.ini && \
-    echo "log_errors = On" >> /usr/local/etc/php/conf.d/error-logging.ini && \
-    echo "error_log = /var/www/html/php-errors.log" >> /usr/local/etc/php/conf.d/error-logging.ini
+COPY <<EOF /usr/local/etc/php/conf.d/uploads.ini
+upload_max_filesize = 64M
+post_max_size = 64M
+EOF
+
+COPY <<EOF /usr/local/etc/php/conf.d/error-logging.ini
+log_errors = On
+error_log = /var/www/html/php-errors.log
+EOF
 
 # Enable Apache modules
 RUN a2enmod rewrite headers
