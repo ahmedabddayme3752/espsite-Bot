@@ -21,7 +21,8 @@ RUN docker-php-ext-configure gd --with-jpeg --with-webp && \
     pgsql \
     gd \
     zip \
-    opcache
+    opcache \
+    mysqli
 
 # Configure PHP for WordPress
 RUN { \
@@ -49,9 +50,12 @@ WORKDIR /var/www/html
 RUN curl -O https://wordpress.org/latest.tar.gz && \
     tar -xvf latest.tar.gz --strip-components=1 && \
     rm latest.tar.gz && \
+    # Create pg4wp directory and download
     mkdir -p wp-content/plugins/pg4wp && \
     curl -o wp-content/plugins/pg4wp/db.php https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/db.php && \
+    # Set permissions
     chown -R www-data:www-data . && \
+    chmod -R 755 wp-content/plugins/pg4wp && \
     find . -type d -exec chmod 755 {} \; && \
     find . -type f -exec chmod 644 {} \;
 
