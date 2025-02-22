@@ -17,21 +17,13 @@ services:
       - key: PORT
         value: 10000
       - key: WORDPRESS_DB_HOST
-        fromDatabase:
-          name: wordpress-db
-          property: host
+        value: dpg-cusvgi0gph6c73atsci0-a
       - key: WORDPRESS_DB_USER
-        fromDatabase:
-          name: wordpress-db
-          property: user
-      - key: WORDPRESS_DB_PASSWORD
-        fromDatabase:
-          name: wordpress-db
-          property: password
+        value: wordpress_ygs8_user
       - key: WORDPRESS_DB_NAME
-        fromDatabase:
-          name: wordpress-db
-          property: database
+        value: wordpress_ygs8
+      - key: WORDPRESS_DB_PASSWORD
+        sync: false
       - key: WORDPRESS_DEBUG
         value: "true"
     disk:

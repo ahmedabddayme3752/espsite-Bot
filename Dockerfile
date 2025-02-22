@@ -37,7 +37,6 @@ RUN echo '#!/bin/bash\n\
 # Debug information\n\
 echo "Starting container with the following configuration:"\n\
 echo "PORT: $PORT"\n\
-echo "DATABASE_URL: $DATABASE_URL"\n\
 echo "WORDPRESS_DB_HOST: $WORDPRESS_DB_HOST"\n\
 echo "WORDPRESS_DB_NAME: $WORDPRESS_DB_NAME"\n\
 echo "WORDPRESS_DB_USER: $WORDPRESS_DB_USER"\n\
@@ -48,29 +47,35 @@ if [ -n "$PORT" ]; then\n\
     sed -i "s/80/$PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf\n\
 fi\n\
 \n\
-# Wait for the database\n\
-max_retries=30\n\
-counter=0\n\
+# Create wp-config.php\n\
+cat > wp-config.php << EOL\n\
+<?php\n\
+define( "DB_NAME", "$WORDPRESS_DB_NAME" );\n\
+define( "DB_USER", "$WORDPRESS_DB_USER" );\n\
+define( "DB_PASSWORD", "$WORDPRESS_DB_PASSWORD" );\n\
+define( "DB_HOST", "$WORDPRESS_DB_HOST" );\n\
+define( "DB_CHARSET", "utf8" );\n\
+define( "DB_COLLATE", "" );\n\
 \n\
-if [ -n "$DATABASE_URL" ]; then\n\
-    # Parse DATABASE_URL\n\
-    DB_HOST=$(echo $DATABASE_URL | grep -oP "(?<=@)[^:]+(?=:)")\n\
-    DB_PORT=$(echo $DATABASE_URL | grep -oP "(?<=:)[0-9]+(?=/)")\n\
-    DB_NAME=$(echo $DATABASE_URL | grep -oP "(?<=/)[^?]+")\n\
-    DB_USER=$(echo $DATABASE_URL | grep -oP "(?<=://)[^:]+(?=:)")\n\
-    DB_PASS=$(echo $DATABASE_URL | grep -oP "(?<=:)[^@]+(?=@)")\n\
-    \n\
-    # Set WordPress environment variables\n\
-    export WORDPRESS_DB_HOST=$DB_HOST\n\
-    export WORDPRESS_DB_USER=$DB_USER\n\
-    export WORDPRESS_DB_PASSWORD=$DB_PASS\n\
-    export WORDPRESS_DB_NAME=$DB_NAME\n\
-fi\n\
+\${table_prefix} = "wp_";\n\
+\n\
+define( "WP_DEBUG", true );\n\
+\n\
+if ( ! defined( "ABSPATH" ) ) {\n\
+    define( "ABSPATH", __DIR__ . "/" );\n\
+}\n\
+\n\
+require_once ABSPATH . "wp-settings.php";\n\
+EOL\n\
 \n\
 echo "Database configuration:"\n\
 echo "DB_HOST: $WORDPRESS_DB_HOST"\n\
 echo "DB_USER: $WORDPRESS_DB_USER"\n\
 echo "DB_NAME: $WORDPRESS_DB_NAME"\n\
+\n\
+# Test database connection\n\
+max_retries=30\n\
+counter=0\n\
 \n\
 until PGPASSWORD=$WORDPRESS_DB_PASSWORD psql -h "$WORDPRESS_DB_HOST" -U "$WORDPRESS_DB_USER" -d "$WORDPRESS_DB_NAME" -c "\\q" 2>/dev/null; do\n\
     counter=$((counter+1))\n\
