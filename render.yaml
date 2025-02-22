@@ -1,3 +1,10 @@
+databases:
+  - name: wordpress-db
+    plan: free
+    type: postgres
+    region: ohio
+    databaseName: wordpress
+
 services:
   - type: web
     name: wordpress
@@ -7,35 +14,34 @@ services:
     buildCommand: docker build -t wordpress-app .
     startCommand: /usr/local/bin/start.sh
     autoDeploy: true
+    dependencies:
+      - wordpress-db
     envVars:
       - key: PORT
         value: 8080
       - key: WORDPRESS_DB_HOST
-        value: wordpress-db.internal
+        fromDatabase:
+          name: wordpress-db
+          property: host
       - key: WORDPRESS_DB_USER
-        value: postgres
+        fromDatabase:
+          name: wordpress-db
+          property: user
       - key: WORDPRESS_DB_PASSWORD
-        generateValue: true
+        fromDatabase:
+          name: wordpress-db
+          property: password
       - key: WORDPRESS_DB_NAME
-        value: wordpress
+        fromDatabase:
+          name: wordpress-db
+          property: database
+      - key: DATABASE_URL
+        fromDatabase:
+          name: wordpress-db
+          property: connectionString
       - key: WORDPRESS_DEBUG
         value: "true"
     disk:
       name: wordpress-data
       mountPath: /var/www/html/wp-content/uploads
       sizeGB: 1
-
-  - type: pserv
-    name: wordpress-db
-    env: docker
-    plan: free
-    region: ohio
-    image: postgres:15-alpine
-    autoDeploy: false
-    envVars:
-      - key: POSTGRES_DB
-        value: wordpress
-      - key: POSTGRES_USER
-        value: postgres
-      - key: POSTGRES_PASSWORD
-        generateValue: true
