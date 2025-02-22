@@ -14,7 +14,25 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo pdo_pgsql pgsql gd zip
+RUN docker-php-ext-configure gd --with-jpeg --with-webp && \
+    docker-php-ext-install -j$(nproc) \
+    pdo \
+    pdo_pgsql \
+    pgsql \
+    gd \
+    zip \
+    opcache
+
+# Configure PHP for WordPress
+RUN { \
+    echo 'display_errors = On'; \
+    echo 'error_reporting = E_ALL'; \
+    echo 'log_errors = On'; \
+    echo 'error_log = /dev/stderr'; \
+    echo 'upload_max_filesize = 64M'; \
+    echo 'post_max_size = 64M'; \
+    echo 'memory_limit = 256M'; \
+    } > /usr/local/etc/php/conf.d/wordpress.ini
 
 # Enable Apache modules
 RUN a2enmod rewrite headers && \

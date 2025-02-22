@@ -11,35 +11,32 @@ if ($database_url) {
     define('DB_NAME', ltrim($url['path'], '/'));
     define('DB_USER', $url['user']);
     define('DB_PASSWORD', $url['pass']);
-    define('DB_HOST', $url['host']);
+    define('DB_HOST', $url['host'] . ':' . ($url['port'] ?? '5432'));
 } else {
     // Fallback to individual environment variables
     define('DB_NAME', getenv('WORDPRESS_DB_NAME'));
     define('DB_USER', getenv('WORDPRESS_DB_USER'));
     define('DB_PASSWORD', getenv('WORDPRESS_DB_PASSWORD'));
-    define('DB_HOST', getenv('WORDPRESS_DB_HOST'));
+    define('DB_HOST', getenv('WORDPRESS_DB_HOST') . ':' . (getenv('WORDPRESS_DB_PORT') ?: '5432'));
 }
 
-// Enable error logging
-@ini_set('log_errors', 'On');
-@ini_set('error_log', '/var/www/html/php-errors.log');
-error_log("Database connection details:");
-error_log("DB_HOST: " . DB_HOST);
-error_log("DB_USER: " . DB_USER);
-error_log("DB_NAME: " . DB_NAME);
+// PostgreSQL SSL configuration
+define('DB_SSL', true);
+define('DB_SSLMODE', 'require');
+define('DB_SSL_CA', '/etc/ssl/certs/ca-certificates.crt');
 
 define('DB_CHARSET', 'utf8');
 define('DB_COLLATE', '');
 
 // Authentication Unique Keys and Salts
-define('AUTH_KEY',         getenv('WORDPRESS_AUTH_KEY') ?: 'put your unique phrase here');
-define('SECURE_AUTH_KEY',  getenv('WORDPRESS_SECURE_AUTH_KEY') ?: 'put your unique phrase here');
-define('LOGGED_IN_KEY',    getenv('WORDPRESS_LOGGED_IN_KEY') ?: 'put your unique phrase here');
-define('NONCE_KEY',        getenv('WORDPRESS_NONCE_KEY') ?: 'put your unique phrase here');
-define('AUTH_SALT',        getenv('WORDPRESS_AUTH_SALT') ?: 'put your unique phrase here');
-define('SECURE_AUTH_SALT', getenv('WORDPRESS_SECURE_AUTH_SALT') ?: 'put your unique phrase here');
-define('LOGGED_IN_SALT',   getenv('WORDPRESS_LOGGED_IN_SALT') ?: 'put your unique phrase here');
-define('NONCE_SALT',       getenv('WORDPRESS_NONCE_SALT') ?: 'put your unique phrase here');
+define('AUTH_KEY',         getenv('WORDPRESS_AUTH_KEY') ?: bin2hex(random_bytes(32)));
+define('SECURE_AUTH_KEY',  getenv('WORDPRESS_SECURE_AUTH_KEY') ?: bin2hex(random_bytes(32)));
+define('LOGGED_IN_KEY',    getenv('WORDPRESS_LOGGED_IN_KEY') ?: bin2hex(random_bytes(32)));
+define('NONCE_KEY',        getenv('WORDPRESS_NONCE_KEY') ?: bin2hex(random_bytes(32)));
+define('AUTH_SALT',        getenv('WORDPRESS_AUTH_SALT') ?: bin2hex(random_bytes(32)));
+define('SECURE_AUTH_SALT', getenv('WORDPRESS_SECURE_AUTH_SALT') ?: bin2hex(random_bytes(32)));
+define('LOGGED_IN_SALT',   getenv('WORDPRESS_LOGGED_IN_SALT') ?: bin2hex(random_bytes(32)));
+define('NONCE_SALT',       getenv('WORDPRESS_NONCE_SALT') ?: bin2hex(random_bytes(32)));
 
 $table_prefix = 'wp_';
 
@@ -47,18 +44,24 @@ $table_prefix = 'wp_';
 define('WP_DEBUG', true);
 define('WP_DEBUG_LOG', true);
 define('WP_DEBUG_DISPLAY', false);
+@ini_set('display_errors', 0);
 
-// SSL settings
+// Enable error logging
+error_log("Database connection details:");
+error_log("DB_HOST: " . DB_HOST);
+error_log("DB_USER: " . DB_USER);
+error_log("DB_NAME: " . DB_NAME);
+
+// SSL/HTTPS settings
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
     $_SERVER['HTTPS'] = 'on';
-    define('FORCE_SSL_ADMIN', true);
 }
 
-/* That's all, stop editing! Happy publishing. */
+define('WP_HOME', 'https://' . $_SERVER['HTTP_HOST']);
+define('WP_SITEURL', 'https://' . $_SERVER['HTTP_HOST']);
 
-/** Absolute path to the WordPress directory. */
-if ( ! defined( 'ABSPATH' ) ) {
-    define( 'ABSPATH', __DIR__ . '/' );
+if (!defined('ABSPATH')) {
+    define('ABSPATH', dirname(__FILE__) . '/');
 }
 
 /** Sets up WordPress vars and included files. */
