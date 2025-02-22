@@ -79,11 +79,12 @@ COPY wp-config-render.php /var/www/html/wp-config.php
 # Configure Apache for proper port binding
 RUN sed -i 's/ServerName localhost/ServerName 0.0.0.0/g' /etc/apache2/apache2.conf
 
-# Create start script with proper port configuration
+# Create dynamic port configuration script
 RUN echo '#!/bin/bash\n\
-echo "Configuring Apache port..."\n\
-echo "Listen \$PORT" > /etc/apache2/ports.conf\n\
-echo "Starting Apache on port \$PORT"\n\
+echo "Configuring Apache for port ${PORT}..."\n\
+echo "Listen ${PORT}" > /etc/apache2/ports.conf\n\
+sed -i "s/<VirtualHost \\*:80>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-available/000-default.conf\n\
+echo "Starting Apache..."\n\
 exec apache2-foreground' > /usr/local/bin/start.sh && \
 chmod +x /usr/local/bin/start.sh
 
