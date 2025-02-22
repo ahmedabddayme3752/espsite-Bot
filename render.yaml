@@ -25,7 +25,8 @@ services:
       - key: WORDPRESS_DB_NAME
         value: wordpress_ygs8
       - key: WORDPRESS_DB_PASSWORD
-        sync: false
+        value: $WORDPRESS_DB_PASSWORD
+        sync: true
       - key: WORDPRESS_CONFIG_EXTRA
         value: |
           define('FORCE_SSL_ADMIN', true);

@@ -40,13 +40,13 @@ if ($database_url) {
     define('DB_NAME', ltrim($url['path'], '/'));
     define('DB_USER', $url['user']);
     define('DB_PASSWORD', $url['pass']);
-    define('DB_HOST', $url['host'] . ':' . ($url['port'] ?? '5432'));
+    define('DB_HOST', $url['host'] . ':' . ($url['port'] ?? '5432') . '?sslmode=require&sslrootcert=/etc/ssl/certs/ca-certificates.crt');
 } else {
     // Fallback to individual environment variables
     define('DB_NAME', getenv('WORDPRESS_DB_NAME'));
     define('DB_USER', getenv('WORDPRESS_DB_USER'));
     define('DB_PASSWORD', getenv('WORDPRESS_DB_PASSWORD'));
-    define('DB_HOST', getenv('WORDPRESS_DB_HOST') . ':' . (getenv('WORDPRESS_DB_PORT') ?: '5432'));
+    define('DB_HOST', getenv('WORDPRESS_DB_HOST') . ':' . (getenv('WORDPRESS_DB_PORT') ?: '5432') . '?sslmode=require&sslrootcert=/etc/ssl/certs/ca-certificates.crt');
 }
 
 // PostgreSQL SSL configuration

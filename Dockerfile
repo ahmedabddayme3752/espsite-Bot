@@ -3,6 +3,7 @@ FROM php:8.2-apache
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    ca-certificates \
     libpq-dev \
     libpng-dev \
     libjpeg-dev \
