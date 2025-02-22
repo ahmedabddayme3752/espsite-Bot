@@ -17,7 +17,7 @@ services:
       - key: PORT
         value: 10000
       - key: WORDPRESS_DB_HOST
-        value: dpg-cusvgi0gph6c73atsci0-a
+        value: dpg-cusvgi0gph6c73atsci0-a.ohio-postgres.render.com
       - key: WORDPRESS_DB_USER
         value: wordpress_ygs8_user
       - key: WORDPRESS_DB_NAME
@@ -26,6 +26,10 @@ services:
         sync: false
       - key: WORDPRESS_DEBUG
         value: "true"
+      - key: WORDPRESS_CONFIG_EXTRA
+        value: |
+          define('WP_HOME', 'https://' . $_SERVER['HTTP_HOST']);
+          define('WP_SITEURL', 'https://' . $_SERVER['HTTP_HOST']);
     disk:
       name: wordpress-data
       mountPath: /var/www/html/wp-content/uploads

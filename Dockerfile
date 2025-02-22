@@ -50,16 +50,32 @@ fi\n\
 # Create wp-config.php\n\
 cat > wp-config.php << EOL\n\
 <?php\n\
-define( "DB_NAME", "$WORDPRESS_DB_NAME" );\n\
-define( "DB_USER", "$WORDPRESS_DB_USER" );\n\
-define( "DB_PASSWORD", "$WORDPRESS_DB_PASSWORD" );\n\
-define( "DB_HOST", "$WORDPRESS_DB_HOST" );\n\
+// Database configuration\n\
+define( "DB_NAME", getenv("WORDPRESS_DB_NAME") );\n\
+define( "DB_USER", getenv("WORDPRESS_DB_USER") );\n\
+define( "DB_PASSWORD", getenv("WORDPRESS_DB_PASSWORD") );\n\
+define( "DB_HOST", getenv("WORDPRESS_DB_HOST") );\n\
 define( "DB_CHARSET", "utf8" );\n\
 define( "DB_COLLATE", "" );\n\
 \n\
-\${table_prefix} = "wp_";\n\
+// Authentication Unique Keys and Salts\n\
+define("AUTH_KEY",         "$(openssl rand -base64 48)");\n\
+define("SECURE_AUTH_KEY",  "$(openssl rand -base64 48)");\n\
+define("LOGGED_IN_KEY",    "$(openssl rand -base64 48)");\n\
+define("NONCE_KEY",        "$(openssl rand -base64 48)");\n\
+define("AUTH_SALT",        "$(openssl rand -base64 48)");\n\
+define("SECURE_AUTH_SALT", "$(openssl rand -base64 48)");\n\
+define("LOGGED_IN_SALT",   "$(openssl rand -base64 48)");\n\
+define("NONCE_SALT",       "$(openssl rand -base64 48)");\n\
+\n\
+\$table_prefix = "wp_";\n\
 \n\
 define( "WP_DEBUG", true );\n\
+\n\
+// Additional WordPress Configuration\n\
+if (getenv("WORDPRESS_CONFIG_EXTRA")) {\n\
+    eval(getenv("WORDPRESS_CONFIG_EXTRA"));\n\
+}\n\
 \n\
 if ( ! defined( "ABSPATH" ) ) {\n\
     define( "ABSPATH", __DIR__ . "/" );\n\
