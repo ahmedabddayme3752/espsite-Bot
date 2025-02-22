@@ -113,7 +113,9 @@ RewriteCond %{REQUEST_FILENAME} !-d\n\
 RewriteRule . /index.php [L]' > /var/www/html/.htaccess
 
 # Install PostgreSQL dependencies
-RUN apt-get update && apt-get install -y libpq-dev \
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    ca-certificates \
     && docker-php-ext-install pdo pdo_pgsql \
     && update-ca-certificates
 

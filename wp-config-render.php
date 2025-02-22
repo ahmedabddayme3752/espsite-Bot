@@ -46,7 +46,8 @@ if ($url === false) {
 define('DB_NAME', ltrim($url['path'], '/'));
 define('DB_USER', $url['user']);
 define('DB_PASSWORD', $url['pass']);
-define('DB_HOST', $url['host'] . ':' . ($url['port'] ?? '5432'));
+$host = $url['host'] . '.oregon-postgres.render.com';
+define('DB_HOST', $host . ':' . ($url['port'] ?? '5432'));
 
 // PostgreSQL connection settings
 define('DB_CHARSET', 'utf8');
@@ -57,10 +58,12 @@ define('DB_SSLROOTCERT', '/etc/ssl/certs/ca-certificates.crt');
 
 // Temporary connection test
 $conn = new PDO(
-    "pgsql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";sslmode=require",
+    "pgsql:host=".DB_HOST.";dbname=".DB_NAME.";sslmode=require",
     DB_USER,
     DB_PASSWORD,
-    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    ]
 );
 echo "<!-- Connection successful! -->";
 
