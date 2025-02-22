@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     unzip \
     curl \
+    net-tools \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
@@ -37,20 +38,26 @@ RUN curl -O https://wordpress.org/latest.tar.gz && \
 # Create wp-config.php from environment variables
 COPY wp-config-render.php /var/www/html/wp-config.php
 
-# Configure Apache for dynamic port
-RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf && \
-    sed -i 's/:80/:${PORT}/g' /etc/apache2/sites-available/000-default.conf
+# Configure Apache for proper port binding
+RUN sed -i 's/Listen 80/Listen 0.0.0.0:${PORT}/g' /etc/apache2/ports.conf && \
+    sed -i 's/<VirtualHost \*:80>/<VirtualHost *:${PORT}>/g' /etc/apache2/sites-available/000-default.conf && \
+    sed -i 's/ServerName localhost/ServerName 0.0.0.0/g' /etc/apache2/apache2.conf
 
 # Create debug script
 RUN echo '#!/bin/bash\n\
 echo "Debugging container startup..."\n\
+echo "PORT environment variable: $PORT"\n\
+echo "Checking Apache ports:"\n\
+grep Listen /etc/apache2/ports.conf\n\
+echo "Checking VirtualHost configuration:"\n\
+grep VirtualHost /etc/apache2/sites-available/000-default.conf\n\
+echo "Listing active ports:"\n\
+netstat -tlpn\n\
 echo "Listing /var/www/html contents:"\n\
 ls -la /var/www/html\n\
-echo "Apache configuration:"\n\
-apache2ctl -S\n\
 echo "Starting Apache..."\n\
 apache2-foreground' > /usr/local/bin/start-debug.sh && \
-    chmod +x /usr/local/bin/start-debug.sh
+chmod +x /usr/local/bin/start-debug.sh
 
 # Create .htaccess
 RUN echo 'RewriteEngine On\n\
