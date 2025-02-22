@@ -23,7 +23,9 @@ error_log = /var/www/html/php-errors.log
 EOF
 
 # Enable Apache modules
-RUN a2enmod rewrite headers
+RUN a2enmod rewrite headers && \
+    a2dismod autoindex && \
+    echo 'ServerName localhost' >> /etc/apache2/apache2.conf
 
 # Create WordPress directory
 WORKDIR /var/www/html
@@ -122,6 +124,9 @@ RUN chown -R www-data:www-data /var/www/html && \
 # Configure Apache for dynamic port
 RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf && \
     sed -i 's/:80/:${PORT}/g' /etc/apache2/sites-available/000-default.conf
+
+# Configure Apache virtual host
+RUN sed -i '/DocumentRoot \/var\/www\/html/a\        <Directory \/var\/www\/html>\n            Options Indexes FollowSymLinks\n            AllowOverride All\n            Require all granted\n        <\/Directory>' /etc/apache2/sites-available/000-default.conf
 
 # Add Apache directory index configuration
 RUN echo 'DirectoryIndex index.php index.html' >> /etc/apache2/mods-available/dir.conf
