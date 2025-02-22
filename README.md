@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![ESP Logo](esplogo.png)
+![ESP Logo](wp-content/plugins/espbot/assets/images/esplogo.png))
 
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
@@ -240,7 +240,7 @@ Tous droits réservés
 
 <div align="center">
 
-![ESP Logo](https://esp.sn/wp-content/uploads/2023/11/cropped-logo-ESP.png)
+![ESP Logo](wp-content/plugins/espbot/assets/images/esplogo.png))
 
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
