@@ -1,6 +1,7 @@
 databases:
   - name: wordpress-db
     plan: free
+    region: ohio
     databaseName: wordpress
     ipAllowList: []
 
@@ -14,6 +15,8 @@ services:
     startCommand: /usr/local/bin/start.sh
     healthCheckPath: /
     autoDeploy: true
+    dependencies:
+      - wordpress-db
     envVars:
       - key: PORT
         value: 8080
@@ -22,9 +25,7 @@ services:
           name: wordpress-db
           property: host
       - key: WORDPRESS_DB_NAME
-        fromDatabase:
-          name: wordpress-db
-          property: database
+        value: wordpress
       - key: WORDPRESS_DB_USER
         fromDatabase:
           name: wordpress-db
