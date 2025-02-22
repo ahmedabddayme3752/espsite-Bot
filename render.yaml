@@ -4,6 +4,7 @@ databases:
     region: ohio
     databaseName: wordpress
     ipAllowList: []
+    postgresMajorVersion: 15
 
 services:
   - type: web
@@ -13,7 +14,7 @@ services:
     region: ohio
     buildCommand: docker build -t wordpress-app .
     startCommand: /usr/local/bin/start.sh
-    healthCheckPath: /
+    healthCheckPath: /wp-admin/install.php
     autoDeploy: true
     dependencies:
       - wordpress-db
