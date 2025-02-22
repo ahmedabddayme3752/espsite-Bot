@@ -30,24 +30,25 @@ require_once(PG4WP_ROOT . '/db.php');
 
 // ** Database settings - You can get this info from your web host ** //
 
-// Try to get database URL from environment
+// Parse database URL for Render
 $database_url = getenv('DATABASE_URL');
-
 if ($database_url) {
+    // Use the DATABASE_URL if provided (internal connection)
     $url = parse_url($database_url);
-    
-    // Remove leading slash from database name
     define('DB_NAME', ltrim($url['path'], '/'));
     define('DB_USER', $url['user']);
     define('DB_PASSWORD', $url['pass']);
-    define('DB_HOST', $url['host'] . ':' . ($url['port'] ?? '5432') . '?sslmode=require&sslrootcert=/etc/ssl/certs/ca-certificates.crt');
+    define('DB_HOST', $url['host'] . ':' . ($url['port'] ?? '5432') . '?sslmode=require');
 } else {
     // Fallback to individual environment variables
     define('DB_NAME', getenv('WORDPRESS_DB_NAME'));
     define('DB_USER', getenv('WORDPRESS_DB_USER'));
     define('DB_PASSWORD', getenv('WORDPRESS_DB_PASSWORD'));
-    define('DB_HOST', getenv('WORDPRESS_DB_HOST') . ':' . (getenv('WORDPRESS_DB_PORT') ?: '5432') . '?sslmode=require&sslrootcert=/etc/ssl/certs/ca-certificates.crt');
+    define('DB_HOST', getenv('WORDPRESS_DB_HOST') . ':' . (getenv('WORDPRESS_DB_PORT') ?: '5432') . '?sslmode=require');
 }
+
+// PostgreSQL database type
+define('DB_TYPE', 'pgsql');
 
 // PostgreSQL SSL configuration
 define('DB_SSL', true);

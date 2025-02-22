@@ -2,31 +2,44 @@ databases:
   - name: wordpress-db
     plan: free
     type: postgres
-    region: ohio
+    region: oregon
 
 services:
   - type: web
     name: wordpress
     env: docker
     plan: free
-    region: ohio
+    region: oregon
     buildCommand: docker build -t wordpress-app .
     startCommand: /usr/local/bin/start.sh
     autoDeploy: true
     envVars:
       - key: PORT
         value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: wordpress-db
+          property: connectionString
       - key: WORDPRESS_DB_HOST
-        value: dpg-cusvgi0gph6c73atsci0-a.ohio-postgres.render.com
+        fromDatabase:
+          name: wordpress-db
+          property: host
       - key: WORDPRESS_DB_PORT
-        value: "5432"
+        fromDatabase:
+          name: wordpress-db
+          property: port
       - key: WORDPRESS_DB_USER
-        value: wordpress_ygs8_user
+        fromDatabase:
+          name: wordpress-db
+          property: user
       - key: WORDPRESS_DB_NAME
-        value: wordpress_ygs8
+        fromDatabase:
+          name: wordpress-db
+          property: database
       - key: WORDPRESS_DB_PASSWORD
-        value: $WORDPRESS_DB_PASSWORD
-        sync: true
+        fromDatabase:
+          name: wordpress-db
+          property: password
       - key: WORDPRESS_CONFIG_EXTRA
         value: |
           define('FORCE_SSL_ADMIN', true);

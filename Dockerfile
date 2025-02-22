@@ -44,6 +44,16 @@ RUN a2enmod rewrite headers && \
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf && \
     sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
+# Configure Apache to listen on PORT environment variable
+RUN echo "Listen ${PORT}" > /etc/apache2/ports.conf && \
+    sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/sites-available/000-default.conf
+
+# Make port configurable
+ENV PORT=10000
+
+# Expose the port
+EXPOSE ${PORT}
+
 # Set working directory
 WORKDIR /var/www/html
 
@@ -64,9 +74,13 @@ RUN curl -O https://wordpress.org/latest.tar.gz && \
 COPY wp-config-render.php /var/www/html/wp-config.php
 
 # Configure Apache for proper port binding
-RUN sed -i 's/Listen 80/Listen 0.0.0.0:${PORT}/g' /etc/apache2/ports.conf && \
-    sed -i 's/<VirtualHost \*:80>/<VirtualHost *:${PORT}>/g' /etc/apache2/sites-available/000-default.conf && \
-    sed -i 's/ServerName localhost/ServerName 0.0.0.0/g' /etc/apache2/apache2.conf
+RUN sed -i 's/ServerName localhost/ServerName 0.0.0.0/g' /etc/apache2/apache2.conf
+
+# Create start script
+RUN echo '#!/bin/bash\n\
+echo "Starting Apache on port ${PORT}"\n\
+apache2-foreground' > /usr/local/bin/start.sh && \
+    chmod +x /usr/local/bin/start.sh
 
 # Create debug script
 RUN echo '#!/bin/bash\n\
@@ -92,7 +106,5 @@ RewriteCond %{REQUEST_FILENAME} !-f\n\
 RewriteCond %{REQUEST_FILENAME} !-d\n\
 RewriteRule . /index.php [L]' > /var/www/html/.htaccess
 
-EXPOSE ${PORT}
-
-# Use debug script as entrypoint
-CMD ["/usr/local/bin/start-debug.sh"]
+# Set the default command
+CMD ["/usr/local/bin/start.sh"]
