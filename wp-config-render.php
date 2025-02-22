@@ -53,17 +53,14 @@ define('DB_CHARSET', 'utf8');
 define('DB_COLLATE', '');
 define('DB_SSL', true);
 define('DB_SSLMODE', 'require');
-define('DB_SSL_CA', '/etc/ssl/certs/ca-certificates.crt');
+define('DB_SSLROOTCERT', '/etc/ssl/certs/ca-certificates.crt');
 
 // Temporary connection test
 $conn = new PDO(
     "pgsql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";sslmode=require",
     DB_USER,
     DB_PASSWORD,
-    [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::PGSQL_ATTR_SSL_MODE => PDO::PGSQL_SSL_MODE_REQUIRE
-    ]
+    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
 );
 echo "<!-- Connection successful! -->";
 

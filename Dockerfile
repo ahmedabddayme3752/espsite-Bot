@@ -112,5 +112,10 @@ RewriteCond %{REQUEST_FILENAME} !-f\n\
 RewriteCond %{REQUEST_FILENAME} !-d\n\
 RewriteRule . /index.php [L]' > /var/www/html/.htaccess
 
+# Install PostgreSQL dependencies
+RUN apt-get update && apt-get install -y libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql \
+    && update-ca-certificates
+
 # Set the default command
 CMD ["/usr/local/bin/start.sh"]
