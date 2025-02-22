@@ -1,11 +1,3 @@
-databases:
-  - name: wordpress-db
-    plan: free
-    region: ohio
-    databaseName: wordpress
-    ipAllowList: []
-    postgresMajorVersion: 15
-
 services:
   - type: web
     name: wordpress
@@ -14,42 +6,36 @@ services:
     region: ohio
     buildCommand: docker build -t wordpress-app .
     startCommand: /usr/local/bin/start.sh
-    healthCheckPath: /wp-admin/install.php
     autoDeploy: true
-    dependencies:
-      - wordpress-db
     envVars:
       - key: PORT
         value: 8080
       - key: WORDPRESS_DB_HOST
-        fromDatabase:
-          name: wordpress-db
-          property: host
+        value: wordpress-db.internal
+      - key: WORDPRESS_DB_USER
+        value: postgres
+      - key: WORDPRESS_DB_PASSWORD
+        generateValue: true
       - key: WORDPRESS_DB_NAME
         value: wordpress
-      - key: WORDPRESS_DB_USER
-        fromDatabase:
-          name: wordpress-db
-          property: user
-      - key: WORDPRESS_DB_PASSWORD
-        fromDatabase:
-          name: wordpress-db
-          property: password
-      - key: DATABASE_URL
-        fromDatabase:
-          name: wordpress-db
-          property: connectionString
       - key: WORDPRESS_DEBUG
         value: "true"
-      - key: WP_ENV
-        value: "production"
-      - key: WORDPRESS_CONFIG_EXTRA
-        value: |
-          define('WP_HOME', 'https://' . $_SERVER['HTTP_HOST']);
-          define('WP_SITEURL', 'https://' . $_SERVER['HTTP_HOST']);
-          define('FORCE_SSL_ADMIN', true);
-          $_SERVER['HTTPS'] = 'on';
     disk:
       name: wordpress-data
       mountPath: /var/www/html/wp-content/uploads
       sizeGB: 1
+
+  - type: pserv
+    name: wordpress-db
+    env: docker
+    plan: free
+    region: ohio
+    image: postgres:15-alpine
+    autoDeploy: false
+    envVars:
+      - key: POSTGRES_DB
+        value: wordpress
+      - key: POSTGRES_USER
+        value: postgres
+      - key: POSTGRES_PASSWORD
+        generateValue: true
