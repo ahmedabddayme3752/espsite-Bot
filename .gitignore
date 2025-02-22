@@ -6,6 +6,8 @@
 !docker-compose.yml
 !Dockerfile
 !wp-config-render.php
+!render.yaml
+!composer.json
 
 # And not these folders...
 !wp-content/

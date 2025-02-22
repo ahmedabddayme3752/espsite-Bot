@@ -124,7 +124,7 @@ jQuery(document).ready(function($) {
                 contextDiv.append($('<h4>').text('Documents Pertinents:'));
                 parsedMessage.context.forEach(ctx => {
                     const contextItem = $('<div>').addClass('espbot-context-item');
-                    contextItem.html(escapeHtml(ctx));
+                    contextItem.html(md.render(ctx)); // Use markdown rendering
                     contextDiv.append(contextItem);
                 });
                 contentDiv.append(contextDiv);
@@ -133,7 +133,7 @@ jQuery(document).ready(function($) {
             // Add main response
             if (parsedMessage.response) {
                 const responseDiv = $('<div>').addClass('espbot-response-section');
-                responseDiv.html(escapeHtml(parsedMessage.response));
+                responseDiv.html(md.render(parsedMessage.response)); // Use markdown rendering
                 contentDiv.append(responseDiv);
             }
             
@@ -145,7 +145,7 @@ jQuery(document).ready(function($) {
                 parsedMessage.variations.forEach(variation => {
                     const variationDiv = $('<div>').addClass('espbot-variation');
                     variationDiv.append($('<h5>').text(variation.title));
-                    variationDiv.append($('<p>').html(escapeHtml(variation.content)));
+                    variationDiv.append($('<div>').html(md.render(variation.content))); // Use markdown rendering
                     variationsDiv.append(variationDiv);
                 });
                 
@@ -160,7 +160,7 @@ jQuery(document).ready(function($) {
                 parsedMessage.faq.forEach(item => {
                     const questionDiv = $('<div>').addClass('espbot-faq-item');
                     questionDiv.append($('<h5>').text(item.question));
-                    questionDiv.append($('<p>').html(escapeHtml(item.answer)));
+                    questionDiv.append($('<div>').html(md.render(item.answer))); // Use markdown rendering
                     faqDiv.append(questionDiv);
                 });
                 
@@ -176,7 +176,7 @@ jQuery(document).ready(function($) {
                 parsedMessage.sources.forEach(source => {
                     if (source) {
                         const sourceItem = $('<li>').addClass('espbot-source-item');
-                        sourceItem.html(escapeHtml(source));
+                        sourceItem.html(md.render(source)); // Use markdown rendering
                         sourcesList.append(sourceItem);
                     }
                 });
@@ -187,7 +187,7 @@ jQuery(document).ready(function($) {
             
         } catch (e) {
             // Fallback for plain text messages
-            contentDiv.html(escapeHtml(message));
+            contentDiv.html(md.render(message)); // Use markdown rendering for plain text
         }
         
         // Add copy button
