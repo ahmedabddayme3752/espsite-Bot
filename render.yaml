@@ -10,10 +10,6 @@ services:
     envVars:
       - key: PORT
         value: 8080
-      - key: DATABASE_URL
-        fromDatabase:
-          name: wordpress-db
-          property: connectionString
       - key: WORDPRESS_DB_HOST
         fromDatabase:
           name: wordpress-db
@@ -30,6 +26,10 @@ services:
         fromDatabase:
           name: wordpress-db
           property: password
+      - key: DATABASE_URL
+        fromDatabase:
+          name: wordpress-db
+          property: connectionString
       - key: WORDPRESS_DEBUG
         value: "true"
       - key: WP_ENV
@@ -50,15 +50,9 @@ services:
         generateValue: true
       - key: WORDPRESS_NONCE_SALT
         generateValue: true
-      - key: WORDPRESS_CONFIG_EXTRA
-        value: |
-          define('WP_HOME', 'https://' . $_SERVER['HTTP_HOST']);
-          define('WP_SITEURL', 'https://' . $_SERVER['HTTP_HOST']);
-          define('FORCE_SSL_ADMIN', true);
-          $_SERVER['HTTPS'] = 'on';
 
 databases:
   - name: wordpress-db
-    databaseName: wordpress
     plan: free
+    databaseName: wordpress
     ipAllowList: []
