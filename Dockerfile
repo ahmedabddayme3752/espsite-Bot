@@ -41,25 +41,33 @@ RUN a2enmod rewrite headers && \
     a2dismod -f autoindex
 
 # Configure Apache
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf && \
-    sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf && \
-    sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf && \
-    sed -i "s/VirtualHost *:80/VirtualHost *:${PORT}/g" /etc/apache2/sites-available/000-default.conf
+RUN echo "ServerName 0.0.0.0" >> /etc/apache2/apache2.conf && \
+    sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
-# Set environment variables
-ENV PORT=80
-ENV APACHE_PORT=80
+# Create start script with proper port binding
+RUN echo '#!/bin/bash\n\
+PORT="${PORT:-10000}"\n\
+echo "Listen 0.0.0.0:$PORT" > /etc/apache2/ports.conf\n\
+sed -i "s/:80/:$PORT/g" /etc/apache2/sites-available/000-default.conf\n\
+sed -i "s/VirtualHost \*:80/VirtualHost *:$PORT/g" /etc/apache2/sites-available/000-default.conf\n\
+echo "Starting Apache on 0.0.0.0:$PORT"\n\
+apache2-foreground' > /usr/local/bin/start.sh && \
+    chmod +x /usr/local/bin/start.sh
 
 # Configure WordPress database adapter
 RUN mkdir -p /var/www/html/wp-content/plugins/pg4wp && \
     ln -sf /var/www/html/wp-content/plugins/pg4wp/db.php /var/www/html/wp-content/db.php && \
     chown -R www-data:www-data /var/www/html
 
-# Expose the port
-EXPOSE ${PORT}
+# Set environment variables
+ENV PORT=10000
+ENV APACHE_PORT=10000
 
 # Set working directory
 WORKDIR /var/www/html
+
+# Expose port 10000 (Render's default)
+EXPOSE 10000
 
 # Download and install WordPress
 RUN curl -O https://wordpress.org/latest.tar.gz && \
@@ -74,45 +82,8 @@ RUN curl -O https://wordpress.org/latest.tar.gz && \
     find . -type d -exec chmod 755 {} \; && \
     find . -type f -exec chmod 644 {} \;
 
-# Configure WordPress database adapter
-RUN mkdir -p /var/www/html/wp-content/plugins/pg4wp && \
-    ln -sf /var/www/html/wp-content/plugins/pg4wp/db.php /var/www/html/wp-content/db.php && \
-    chown -R www-data:www-data /var/www/html
-
-# Set environment variables
-ENV PORT=80
-ENV APACHE_PORT=80
-
 # Create wp-config.php from environment variables
 COPY wp-config-render.php /var/www/html/wp-config.php
-
-# Configure Apache for proper port binding
-RUN sed -i 's/ServerName localhost/ServerName 0.0.0.0/g' /etc/apache2/apache2.conf
-
-# Create dynamic port configuration script
-RUN echo '#!/bin/bash\n\
-echo "Configuring Apache for port ${PORT}..."\n\
-echo "Listen ${PORT}" > /etc/apache2/ports.conf\n\
-sed -i "s/<VirtualHost \\*:80>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-available/000-default.conf\n\
-echo "Starting Apache..."\n\
-exec apache2-foreground' > /usr/local/bin/start.sh && \
-chmod +x /usr/local/bin/start.sh
-
-# Create debug script
-RUN echo '#!/bin/bash\n\
-echo "Debugging container startup..."\n\
-echo "PORT environment variable: $PORT"\n\
-echo "Checking Apache ports:"\n\
-grep Listen /etc/apache2/ports.conf\n\
-echo "Checking VirtualHost configuration:"\n\
-grep VirtualHost /etc/apache2/sites-available/000-default.conf\n\
-echo "Listing active ports:"\n\
-netstat -tlpn\n\
-echo "Listing /var/www/html contents:"\n\
-ls -la /var/www/html\n\
-echo "Starting Apache..."\n\
-apache2-foreground' > /usr/local/bin/start-debug.sh && \
-chmod +x /usr/local/bin/start-debug.sh
 
 # Create .htaccess
 RUN echo 'RewriteEngine On\n\
@@ -129,11 +100,5 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo pdo_pgsql \
     && update-ca-certificates
 
-# Install system dependencies and PHP extensions
-RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    && docker-php-ext-install pdo pdo_pgsql \
-    && update-ca-certificates
-
 # Set the default command
-CMD ["apache2-foreground"]
+CMD ["/usr/local/bin/start.sh"]
