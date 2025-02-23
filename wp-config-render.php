@@ -1,4 +1,9 @@
 <?php
+// Define ABSPATH first
+if (!defined('ABSPATH')) {
+    define('ABSPATH', __DIR__ . '/');
+}
+
 // Enable error reporting for debugging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -10,10 +15,6 @@ define('DB_TYPE', 'pgsql');
 define('PG4WP_DEBUG', true);
 
 // Load pg4wp adapter BEFORE any WordPress files
-if (!defined('ABSPATH')) {
-    define('ABSPATH', __DIR__ . '/');
-}
-
 $pg4wp_path = ABSPATH . 'wp-content/plugins/pg4wp/db.php';
 $db_php_path = ABSPATH . 'wp-content/db.php';
 
@@ -114,8 +115,5 @@ define('DISALLOW_FILE_EDIT', true);
 define('WP_HOME', 'https://espbot.onrender.com');
 define('WP_SITEURL', WP_HOME);
 
-/* That's all, stop editing! */
-if (!defined('ABSPATH')) {
-    define('ABSPATH', __DIR__ . '/');
-}
+// Include wp-settings.php
 require_once(ABSPATH . 'wp-settings.php');
