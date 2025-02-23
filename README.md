@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![ESP Logo](wp-content/plugins/espbot/assets/images/esplogo.png))
+![ESP Logo](wp-content/plugins/espbot/assets/images/esplogo.png)
 
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)

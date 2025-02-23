@@ -3,27 +3,49 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// ** PostgreSQL for WordPress configuration ** //
-if (!defined('DB_TYPE')) {
-    define('DB_TYPE', 'pgsql');
-}
+// ** PostgreSQL settings - You can get this info from your web host ** //
 define('DB_DRIVER', 'pgsql');
+define('DB_TYPE', 'pgsql');
+
+// Parse database URL for Render
+$database_url = getenv('DATABASE_URL');
+if (!$database_url) {
+    error_log('DATABASE_URL environment variable is not set');
+    die('DATABASE_URL environment variable is not set');
+}
+
+$url = parse_url($database_url);
+if ($url === false) {
+    error_log('Failed to parse DATABASE_URL');
+    die('Failed to parse DATABASE_URL');
+}
+
+// Define database constants before loading pg4wp
+define('DB_NAME', ltrim($url['path'], '/'));
+define('DB_USER', $url['user']);
+define('DB_PASSWORD', $url['pass']);
+define('DB_HOST', $url['host'] . '.oregon-postgres.render.com');
+define('DB_CHARSET', 'utf8');
+define('DB_COLLATE', '');
+
+// PostgreSQL specific settings
+define('DB_PORT', $url['port'] ?? 5432);
+define('DB_SSL', true);
+define('DB_SSLMODE', 'require');
+define('DB_SSLROOTCERT', '/etc/ssl/certs/ca-certificates.crt');
 
 // Set up pg4wp
 define('PG4WP_ROOT', __DIR__ . '/wp-content/plugins/pg4wp');
 if (!file_exists(PG4WP_ROOT . '/db.php')) {
-    error_log('pg4wp not found, attempting to download...');
+    error_log('pg4wp not found, downloading...');
     
-    // Create directory if it doesn't exist
     if (!file_exists(PG4WP_ROOT)) {
         if (!mkdir(PG4WP_ROOT, 0755, true)) {
             error_log('Failed to create pg4wp directory');
-            die('Failed to create required PostgreSQL adapter directory');
+            die('Failed to create PostgreSQL adapter directory');
         }
-        error_log('Created pg4wp directory successfully');
     }
     
-    // Download pg4wp
     $pg4wp_url = 'https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/db.php';
     $context = stream_context_create([
         'ssl' => [
@@ -32,77 +54,41 @@ if (!file_exists(PG4WP_ROOT . '/db.php')) {
         ]
     ]);
     $pg4wp_content = file_get_contents($pg4wp_url, false, $context);
+    
     if ($pg4wp_content === false) {
-        error_log('Failed to download pg4wp from: ' . $pg4wp_url);
-        die('Failed to download required PostgreSQL adapter. Please try again.');
+        error_log('Failed to download pg4wp');
+        die('Failed to download PostgreSQL adapter');
     }
     
     if (!file_put_contents(PG4WP_ROOT . '/db.php', $pg4wp_content)) {
         error_log('Failed to write pg4wp file');
         die('Failed to save PostgreSQL adapter');
     }
-    error_log('Successfully downloaded and saved pg4wp');
+    
+    error_log('Successfully installed pg4wp');
 }
 
-// Verify pg4wp file exists and is readable
-if (!is_readable(PG4WP_ROOT . '/db.php')) {
-    error_log('pg4wp file exists but is not readable');
-    die('PostgreSQL adapter exists but is not readable');
+// Load pg4wp before any database operations
+if (file_exists(PG4WP_ROOT . '/db.php')) {
+    error_log('Loading pg4wp adapter...');
+    require_once(PG4WP_ROOT . '/db.php');
+    error_log('pg4wp adapter loaded successfully');
+} else {
+    error_log('pg4wp adapter not found');
+    die('PostgreSQL adapter not found');
 }
 
-// Load pg4wp
-require_once(PG4WP_ROOT . '/db.php');
-
-// ** Database settings - You can get this info from your web host ** //
-
-// Parse database URL for Render
-$database_url = getenv('DATABASE_URL');
-if (!$database_url) {
-    die('DATABASE_URL environment variable is not set');
+// Test database connection
+try {
+    error_log("Testing PostgreSQL connection...");
+    $dsn = "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";sslmode=require";
+    $pdo = new PDO($dsn, DB_USER, DB_PASSWORD);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    error_log("Database connection successful!");
+} catch (PDOException $e) {
+    error_log("Database connection failed: " . $e->getMessage());
+    die("Database connection failed: " . $e->getMessage());
 }
-
-$url = parse_url($database_url);
-if ($url === false) {
-    die('Failed to parse DATABASE_URL');
-}
-
-define('DB_NAME', ltrim($url['path'], '/'));
-define('DB_USER', $url['user']);
-define('DB_PASSWORD', $url['pass']);
-$host = $url['host'] . '.oregon-postgres.render.com';
-$port = $url['port'] ?? 5432;
-define('DB_HOST', $host);
-define('DB_PORT', $port);
-
-if (!filter_var(gethostbyname($host), FILTER_VALIDATE_IP)) {
-    die("DNS resolution failed for: $host");
-}
-
-$ip = gethostbyname($host);
-$socket = @fsockopen($ip, 5432, $errno, $errstr, 5);
-if (!$socket) {
-    die("Connection failed to $ip:5432 - $errstr");
-}
-fclose($socket);
-
-// PostgreSQL connection settings
-define('DB_CHARSET', 'utf8');
-define('DB_COLLATE', '');
-define('DB_SSL', true);
-define('DB_SSLMODE', 'require');
-define('DB_SSLROOTCERT', '/etc/ssl/certs/ca-certificates.crt');
-
-// Temporary connection test
-error_log("Connecting to PostgreSQL at: pgsql:host=$host;port=$port;dbname=".DB_NAME);
-$conn = new PDO(
-    "pgsql:host=$host;port=$port;dbname=".DB_NAME.";sslmode=require",
-    DB_USER,
-    DB_PASSWORD,
-    [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-    ]
-);
-echo "<!-- Connection successful! -->";
 
 // Authentication Unique Keys and Salts
 define('AUTH_KEY',         getenv('WORDPRESS_AUTH_KEY') ?: bin2hex(random_bytes(32)));
