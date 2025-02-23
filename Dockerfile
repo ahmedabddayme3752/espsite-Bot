@@ -1,18 +1,25 @@
-# Use official PHP Apache image
-FROM php:8.2-apache
+# Use official WordPress Apache image
+FROM wordpress:6.4-apache
 
-# Install system dependencies and dev packages
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    libpng-dev \
-    libjpeg-dev \
-    libwebp-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    git \
-    netcat-openbsd \
-    && rm -rf /var/lib/apt/lists/*
+# Install required packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    default-mysql-client \
+    netcat-openbsd && \
+    rm -rf /var/lib/apt/lists/*
+
+# Add custom entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Add configuration script
+COPY wp-config-render.php /usr/src/wordpress/
+RUN chown www-data:www-data /usr/src/wordpress/wp-config-render.php
+
+# Set environment variables
+ENV WORDPRESS_DB_HOST=mysql-db.internal:3306
+ENV WORDPRESS_DB_NAME=wordpress
+ENV WORDPRESS_DB_USER=wordpress
 
 # Configure GD extension
 RUN docker-php-ext-configure gd --with-jpeg --with-webp
@@ -24,11 +31,6 @@ RUN docker-php-ext-install -j "$(nproc)" \
     pdo_mysql \
     mysqli \
     opcache
-
-# Install MySQL client
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends default-mysql-client && \
-    rm -rf /var/lib/apt/lists/*
 
 # Configure PHP for WordPress
 RUN { \
@@ -92,9 +94,6 @@ sed -i "s/\${PORT}/$PORT/" /etc/apache2/sites-available/000-default.conf\n\
 /usr/local/bin/wait-for-mysql.sh' > /usr/local/bin/start.sh && \
     chmod +x /usr/local/bin/start.sh
 
-# Copy WordPress config
-COPY wp-config-render.php /var/www/html/wp-config.php
-
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html && \
     find /var/www/html -type d -exec chmod 755 {} \; && \
@@ -108,4 +107,5 @@ HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
 WORKDIR /var/www/html
 
 # Set the default command
-CMD ["/usr/local/bin/start.sh"]
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["apache2-foreground"]
