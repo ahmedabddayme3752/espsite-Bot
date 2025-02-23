@@ -78,18 +78,14 @@ RUN curl -O https://wordpress.org/latest.tar.gz && \
     rm -rf wordpress latest.tar.gz
 
 # Install pg4wp adapter
-WORKDIR /tmp
-RUN wget https://github.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/archive/refs/heads/master.zip -O pg4wp.zip && \
-    unzip pg4wp.zip && \
-    mkdir -p /var/www/html/wp-content/plugins/pg4wp && \
-    cp -r postgresql-for-wordpress-master/pg4wp/* /var/www/html/wp-content/plugins/pg4wp/ && \
+RUN mkdir -p /var/www/html/wp-content/plugins/pg4wp && \
+    mkdir -p /var/www/html/wp-content/plugins/pg4wp/driver_pgsql && \
+    curl -o /var/www/html/wp-content/plugins/pg4wp/db.php https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/db.php && \
+    curl -o /var/www/html/wp-content/plugins/pg4wp/driver_pgsql/version.php https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/driver_pgsql/version.php && \
+    curl -o /var/www/html/wp-content/plugins/pg4wp/driver_pgsql.php https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/driver_pgsql.php && \
     cp /var/www/html/wp-content/plugins/pg4wp/db.php /var/www/html/wp-content/db.php && \
-    rm -rf postgresql-for-wordpress-master* pg4wp.zip && \
     chown -R www-data:www-data /var/www/html/wp-content && \
     chmod -R 755 /var/www/html/wp-content
-
-# Set working directory back
-WORKDIR /var/www/html
 
 # Copy configuration files
 COPY wp-config-render.php /var/www/html/wp-config.php
