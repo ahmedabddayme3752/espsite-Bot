@@ -84,8 +84,10 @@ RUN mkdir -p /var/www/html/wp-content/plugins/pg4wp && \
     curl -o /var/www/html/wp-content/plugins/pg4wp/driver_pgsql/version.php https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/driver_pgsql/version.php && \
     curl -o /var/www/html/wp-content/plugins/pg4wp/driver_pgsql.php https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/driver_pgsql.php && \
     cp /var/www/html/wp-content/plugins/pg4wp/db.php /var/www/html/wp-content/db.php && \
+    cp /var/www/html/wp-content/plugins/pg4wp/db.php /var/www/html/wp-db.php && \
     chown -R www-data:www-data /var/www/html/wp-content && \
-    chmod -R 755 /var/www/html/wp-content
+    chmod -R 755 /var/www/html/wp-content && \
+    chmod 644 /var/www/html/wp-db.php
 
 # Copy configuration files
 COPY wp-config-render.php /var/www/html/wp-config.php
