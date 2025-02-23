@@ -1,15 +1,14 @@
 <?php
-// Define ABSPATH first
-if (!defined('ABSPATH')) {
-    define('ABSPATH', __DIR__ . '/');
-}
+/**
+ * WordPress Configuration File for Render
+ */
 
 // Enable error reporting for debugging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 
-// MySQL Database Configuration
+// ** MySQL settings - You can get this info from your web host ** //
 define('DB_NAME', getenv('MYSQL_DATABASE'));
 define('DB_USER', getenv('MYSQL_USER'));
 define('DB_PASSWORD', getenv('MYSQL_PASSWORD'));
@@ -17,18 +16,22 @@ define('DB_HOST', getenv('MYSQL_HOST') . ':' . getenv('DB_PORT'));
 define('DB_CHARSET', 'utf8');
 define('DB_COLLATE', '');
 
-// Check if database credentials are set
+// Check database settings
 if (!DB_NAME || !DB_USER || !DB_PASSWORD || !DB_HOST) {
     error_log('[WordPress] ERROR: Required database environment variables are not set');
     die('Database configuration error: Required environment variables are not set.');
 }
 
-error_log('[WordPress] Database configuration:');
-error_log('[WordPress] DB_HOST: ' . DB_HOST);
-error_log('[WordPress] DB_NAME: ' . DB_NAME);
-error_log('[WordPress] DB_USER: ' . DB_USER);
+// Set up HTTPS if behind proxy
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+    $_SERVER['HTTPS'] = 'on';
+    define('FORCE_SSL_ADMIN', true);
+}
 
-// Authentication Unique Keys and Salts
+/**
+ * Authentication Unique Keys and Salts.
+ * Change these to different unique phrases!
+ */
 define('AUTH_KEY',         getenv('AUTH_KEY') ?: 'put your unique phrase here');
 define('SECURE_AUTH_KEY',  getenv('SECURE_AUTH_KEY') ?: 'put your unique phrase here');
 define('LOGGED_IN_KEY',    getenv('LOGGED_IN_KEY') ?: 'put your unique phrase here');
@@ -41,12 +44,28 @@ define('NONCE_SALT',       getenv('NONCE_SALT') ?: 'put your unique phrase here'
 // WordPress Database Table prefix
 $table_prefix = 'wp_';
 
-// WordPress debug settings
-define('WP_DEBUG', filter_var(getenv('WP_DEBUG'), FILTER_VALIDATE_BOOLEAN));
-define('WP_CACHE', filter_var(getenv('WP_CACHE'), FILTER_VALIDATE_BOOLEAN));
+// WordPress Localized Language
+define('WPLANG', '');
 
-// Auto update settings
-define('WP_AUTO_UPDATE_CORE', filter_var(getenv('WP_AUTO_UPDATE_CORE'), FILTER_VALIDATE_BOOLEAN));
+// WordPress Auto-updates
+define('AUTOMATIC_UPDATER_DISABLED', true);
+define('WP_AUTO_UPDATE_CORE', false);
+
+// Memory settings
+define('WP_MEMORY_LIMIT', '256M');
+
+// Debug settings
+define('WP_DEBUG', filter_var(getenv('WP_DEBUG'), FILTER_VALIDATE_BOOLEAN));
+if (WP_DEBUG) {
+    define('WP_DEBUG_LOG', true);
+    define('WP_DEBUG_DISPLAY', true);
+} else {
+    define('WP_DEBUG_LOG', false);
+    define('WP_DEBUG_DISPLAY', false);
+}
+
+// Cache settings
+define('WP_CACHE', filter_var(getenv('WP_CACHE'), FILTER_VALIDATE_BOOLEAN));
 
 // Additional WordPress configuration
 if (getenv('WORDPRESS_CONFIG_EXTRA')) {

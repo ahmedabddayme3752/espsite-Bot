@@ -43,14 +43,14 @@ RUN { \
 
 # Configure Apache
 RUN a2enmod rewrite headers ssl
-COPY apache2.conf /etc/apache2/apache2.conf
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 RUN { \
     echo '<VirtualHost *:${PORT}>'; \
     echo '    DocumentRoot /var/www/html'; \
     echo '    ErrorLog ${APACHE_LOG_DIR}/error.log'; \
     echo '    CustomLog ${APACHE_LOG_DIR}/access.log combined'; \
     echo '    <Directory /var/www/html/>'; \
-    echo '        Options Indexes FollowSymLinks'; \
+    echo '        Options FollowSymLinks'; \
     echo '        AllowOverride All'; \
     echo '        Require all granted'; \
     echo '    </Directory>'; \
@@ -60,13 +60,10 @@ RUN { \
 # Download and extract WordPress
 RUN curl -o wordpress.tar.gz -fL https://wordpress.org/latest.tar.gz \
     && tar -xzf wordpress.tar.gz --strip-components=1 -C /var/www/html \
-    && rm wordpress.tar.gz \
-    && chown -R www-data:www-data /var/www/html
+    && rm wordpress.tar.gz
 
 # Create wp-content/uploads directory and set permissions
-RUN mkdir -p /var/www/html/wp-content/uploads && \
-    chown -R www-data:www-data /var/www/html/wp-content && \
-    chmod -R 755 /var/www/html/wp-content
+RUN mkdir -p /var/www/html/wp-content/uploads
 
 # Create .htaccess file
 RUN echo 'RewriteEngine On\n\
@@ -76,17 +73,28 @@ RewriteCond %{REQUEST_FILENAME} !-f\n\
 RewriteCond %{REQUEST_FILENAME} !-d\n\
 RewriteRule . /index.php [L]' > /var/www/html/.htaccess
 
-# Copy configuration files
-COPY wp-config-render.php /var/www/html/wp-config.php
-
-# Create start script
+# Create start script with port configuration
 RUN echo '#!/bin/bash\n\
+PORT="${PORT:-10000}"\n\
+echo "Listen \${PORT}" > /etc/apache2/ports.conf\n\
+sed -i "s/\${PORT}/$PORT/" /etc/apache2/sites-available/000-default.conf\n\
 apache2-foreground' > /usr/local/bin/start.sh && \
     chmod +x /usr/local/bin/start.sh
+
+# Copy WordPress config
+COPY wp-config-render.php /var/www/html/wp-config.php
+
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www/html && \
+    find /var/www/html -type d -exec chmod 755 {} \; && \
+    find /var/www/html -type f -exec chmod 644 {} \;
 
 # Healthcheck to verify database connection
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
     CMD mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -e "SELECT 1;" || exit 1
+
+# Set working directory
+WORKDIR /var/www/html
 
 # Set the default command
 CMD ["/usr/local/bin/start.sh"]
