@@ -23,11 +23,17 @@ services:
       - key: PORT
         value: "10000"
       - key: MYSQL_DATABASE
-        value: wordpress
+        fromDatabase:
+          name: wordpressdb
+          property: database
       - key: MYSQL_USER
-        value: wpuser
+        fromDatabase:
+          name: wordpressdb
+          property: user
       - key: MYSQL_PASSWORD
-        generateValue: true
+        fromDatabase:
+          name: wordpressdb
+          property: password
       - key: MYSQL_HOST
         fromDatabase:
           name: wordpressdb
