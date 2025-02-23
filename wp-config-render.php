@@ -1,7 +1,24 @@
 <?php
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+
+// Define database type for pg4wp
+define('DB_DRIVER', 'pgsql');
+define('DB_TYPE', 'pgsql');
+define('PG4WP_DEBUG', true);
+
 // Load pg4wp adapter BEFORE any WordPress files
-$pg4wp_path = __DIR__ . '/wp-content/plugins/pg4wp/db.php';
-$db_php_path = __DIR__ . '/wp-content/db.php';
+if (!defined('ABSPATH')) {
+    define('ABSPATH', __DIR__ . '/');
+}
+
+$pg4wp_path = ABSPATH . 'wp-content/plugins/pg4wp/db.php';
+$db_php_path = ABSPATH . 'wp-content/db.php';
+
+error_log('[WordPress] Looking for pg4wp at: ' . $pg4wp_path);
+error_log('[WordPress] Looking for db.php at: ' . $db_php_path);
 
 if (!file_exists($pg4wp_path)) {
     error_log('[WordPress] ERROR: pg4wp adapter not found at: ' . $pg4wp_path);
@@ -20,15 +37,6 @@ if (!file_exists($db_php_path)) {
 // Load the adapter before any other database operations
 require_once($db_php_path);
 error_log('[WordPress] INFO: pg4wp adapter loaded successfully');
-
-// Enable error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('log_errors', 1);
-
-// ** Database settings ** //
-define('DB_DRIVER', 'pgsql');
-define('DB_TYPE', 'pgsql');
 
 // Parse database URL for Render
 $database_url = getenv('DATABASE_URL');

@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y \
     unzip \
     curl \
     net-tools \
+    zip \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
@@ -55,7 +57,7 @@ apache2-foreground' > /usr/local/bin/start.sh && \
     chmod +x /usr/local/bin/start.sh
 
 # Configure WordPress database adapter
-RUN mkdir -p /var/www/html/wp-content/plugins/pg4wp && \
+RUN mkdir -p /var/www/html/wp-content/plugins && \
     chown -R www-data:www-data /var/www/html
 
 # Set environment variables
@@ -75,11 +77,15 @@ RUN curl -O https://wordpress.org/latest.tar.gz && \
     rm -rf wordpress latest.tar.gz
 
 # Install pg4wp adapter
-RUN mkdir -p /var/www/html/wp-content/plugins/pg4wp && \
-    curl -o /var/www/html/wp-content/plugins/pg4wp/db.php https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/db.php && \
-    chmod 644 /var/www/html/wp-content/plugins/pg4wp/db.php && \
-    cp /var/www/html/wp-content/plugins/pg4wp/db.php /var/www/html/wp-content/db.php && \
-    chown -R www-data:www-data /var/www/html/wp-content
+RUN mkdir -p /var/www/html/wp-content/plugins && \
+    cd /var/www/html/wp-content/plugins && \
+    curl -L -o pg4wp.zip https://github.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/archive/refs/heads/master.zip && \
+    unzip pg4wp.zip && \
+    mv postgresql-for-wordpress-master/pg4wp pg4wp && \
+    cp pg4wp/db.php /var/www/html/wp-content/db.php && \
+    rm -rf postgresql-for-wordpress-master pg4wp.zip && \
+    chown -R www-data:www-data /var/www/html/wp-content && \
+    chmod -R 755 /var/www/html/wp-content
 
 # Copy configuration files
 COPY wp-config-render.php /var/www/html/wp-config.php
