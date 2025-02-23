@@ -8,9 +8,11 @@
 !wp-config-render.php
 !render.yaml
 !composer.json
+!.platform.app.yaml
 
 # And not these folders...
 !wp-content/
+!.platform/
 
 # But ignore everything in wp-content
 wp-content/*
