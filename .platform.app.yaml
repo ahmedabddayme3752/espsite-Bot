@@ -1,27 +1,22 @@
 name: app
 
-type: php:8.1
-build:
-    flavor: composer
+type: "php:8.1"
+
+dependencies:
+    php:
+        wp-cli/wp-cli-bundle: "^2.4"
+        psy/psysh: "^0.10.4"
 
 relationships:
     database: "db:mysql"
     files: "files:files"
 
-runtime:
-    extensions:
-        - mysql
-        - gd
-        - curl
-        - json
-        - openssl
-        - mbstring
-        - zip
-        - xml
-        - imagick
-
 variables:
     php:
+        session.gc_maxlifetime: '200000'
+        session.cookie_lifetime: '2000000'
+        pcre.backtrack_limit: '200000'
+        pcre.recursion_limit: '200000'
         upload_max_filesize: 64M
         post_max_size: 64M
         memory_limit: 256M
@@ -29,30 +24,54 @@ variables:
 web:
     locations:
         "/":
-            root: ""
+            root: "wordpress"
+            passthru: "/index.php"
             index:
-                - index.php
-            expires: -1
+                - "index.php"
+            expires: 600
             scripts: true
-            allow: false
+            allow: true
             rules:
+                ^/composer\.json:
+                    allow: false
+                ^/license\.txt$:
+                    allow: false
+                ^/readme\.html$:
+                    allow: false
                 \.(css|js|gif|jpe?g|png|ttf|eot|woff2?|otf|html|ico|svg?)$:
                     allow: true
-                ^/robots\.txt$:
+        "/wp-content/cache":
+            root: "wordpress/wp-content/cache"
+            scripts: false
+            allow: false
+        "/wp-content/uploads":
+            root: "wordpress/wp-content/uploads"
+            scripts: false
+            allow: false
+            rules:
+                '(?<!-lock)\.(?i:jpe?g|gif|png|svg|bmp|ico|css|js(?:on)?|eot|ttf|woff|woff2|pdf|docx?|xlsx?|pp[st]x?|psd|odt|key|mp[2-5g]|m4[av]|og[gv]|wav|mov|wm[av]|avi|3g[p2])$':
                     allow: true
-                ^/sitemap\.xml$:
-                    allow: true
-
-mounts:
-    "/wp-content/uploads": "shared:files/uploads"
-    "/wp-content/cache": "shared:files/cache"
+                    expires: 1w
 
 disk: 2048
+
+mounts:
+    "wordpress/wp-content/cache":
+        source: local
+        source_path: "cache"
+    "wordpress/wp-content/uploads":
+        source: local
+        source_path: "uploads"
 
 hooks:
     build: |
         set -e
         curl -o wordpress.tar.gz -fL "https://wordpress.org/latest.tar.gz"
-        tar -xzf wordpress.tar.gz --strip-components=1
+        tar -xzf wordpress.tar.gz
         rm wordpress.tar.gz
-        cp wp-config-render.php wp-config.php
+        cp wp-config-render.php wordpress/wp-config.php
+    deploy: |
+        cd wordpress
+        wp cache flush
+        wp core update-db
+        wp cron event run --due-now
