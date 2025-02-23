@@ -1,23 +1,37 @@
 # Use official PHP Apache image
 FROM php:8.2-apache
 
-# Install system dependencies
+# Install system dependencies and dev packages
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     libpng-dev \
     libjpeg-dev \
     libwebp-dev \
     libzip-dev \
-    unzip \
-    curl \
-    net-tools \
+    libpq-dev \
     zip \
     unzip \
-    wget \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PostgreSQL client
-RUN apt-get update && apt-get install -y postgresql-client
+# Configure GD extension
+RUN docker-php-ext-configure gd --with-jpeg --with-webp
+
+# Install PHP extensions
+RUN docker-php-ext-install -j "$(nproc)" \
+    gd \
+    zip \
+    pdo_mysql \
+    mysqli \
+    opcache
+
+# Install PostgreSQL client and extensions
+RUN apt-get update && \
+    apt-get install -y postgresql-client && \
+    docker-php-ext-install -j "$(nproc)" \
+    pdo_pgsql \
+    pgsql \
+    && rm -rf /var/lib/apt/lists/*
 
 # Remove any existing MySQL/MariaDB client packages
 RUN apt-get update && \
@@ -29,14 +43,6 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends default-mysql-client && \
     rm -rf /var/lib/apt/lists/*
-
-# Install PHP extensions
-RUN docker-php-ext-install -j "$(nproc)" \
-    pdo_mysql \
-    mysqli \
-    opcache \
-    pdo_pgsql \
-    pgsql
 
 # Configure PHP for WordPress
 RUN { \
