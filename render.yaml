@@ -1,11 +1,3 @@
-databases:
-  - name: mysql
-    databaseName: wordpress
-    user: wordpress
-    plan: free
-    region: oregon
-    type: mysql
-
 services:
   - type: web
     name: wordpress
@@ -19,25 +11,33 @@ services:
       - key: PORT
         value: "10000"
       - key: MYSQL_DATABASE
-        fromDatabase:
-          name: mysql
-          property: database
+        value: wordpress
       - key: MYSQL_USER
-        fromDatabase:
-          name: mysql
-          property: user
+        value: wordpress_user
       - key: MYSQL_PASSWORD
-        fromDatabase:
-          name: mysql
-          property: password
+        generateValue: true
       - key: MYSQL_HOST
-        fromDatabase:
-          name: mysql
-          property: host
+        value: localhost
       - key: MYSQL_PORT
         value: "3306"
-    envGroups:
-      - name: wordpress-env
+      - key: WP_DEBUG
+        value: "true"
+      - key: AUTH_KEY
+        generateValue: true
+      - key: SECURE_AUTH_KEY
+        generateValue: true
+      - key: LOGGED_IN_KEY
+        generateValue: true
+      - key: NONCE_KEY
+        generateValue: true
+      - key: AUTH_SALT
+        generateValue: true
+      - key: SECURE_AUTH_SALT
+        generateValue: true
+      - key: LOGGED_IN_SALT
+        generateValue: true
+      - key: NONCE_SALT
+        generateValue: true
     disk:
       name: wordpress-data
       mountPath: /var/www/html

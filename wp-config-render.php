@@ -8,25 +8,29 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 
+// Helper function to get environment variables
+function get_env_var($name) {
+    $value = getenv($name);
+    if ($value === false && isset($_ENV[$name])) {
+        $value = $_ENV[$name];
+    }
+    error_log("[WordPress] $name: " . ($value ?: 'not set'));
+    return $value;
+}
+
 // Log environment variables for debugging
 error_log('[WordPress] Database environment variables:');
-foreach ($_ENV as $key => $value) {
-    if (strpos($key, 'MYSQL_') === 0) {
-        error_log("[WordPress] $key: $value");
-    }
-}
+$db_name = get_env_var('MYSQL_DATABASE');
+$db_user = get_env_var('MYSQL_USER');
+$db_password = get_env_var('MYSQL_PASSWORD');
+$db_host = get_env_var('MYSQL_HOST');
+$db_port = get_env_var('MYSQL_PORT') ?: '3306';
 
 // ** MySQL settings - You can get this info from your web host ** //
-$db_port = getenv('MYSQL_PORT') ?: '3306';
-$db_host = getenv('MYSQL_HOST');
-if ($db_host) {
-    $db_host .= ':' . $db_port;
-}
-
-define('DB_NAME', getenv('MYSQL_DATABASE'));
-define('DB_USER', getenv('MYSQL_USER'));
-define('DB_PASSWORD', getenv('MYSQL_PASSWORD'));
-define('DB_HOST', $db_host);
+define('DB_NAME', $db_name);
+define('DB_USER', $db_user);
+define('DB_PASSWORD', $db_password);
+define('DB_HOST', $db_host ? $db_host . ':' . $db_port : null);
 define('DB_CHARSET', 'utf8');
 define('DB_COLLATE', '');
 
@@ -47,14 +51,14 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROT
 /**
  * Authentication Unique Keys and Salts.
  */
-define('AUTH_KEY',         getenv('AUTH_KEY') ?: 'put your unique phrase here');
-define('SECURE_AUTH_KEY',  getenv('SECURE_AUTH_KEY') ?: 'put your unique phrase here');
-define('LOGGED_IN_KEY',    getenv('LOGGED_IN_KEY') ?: 'put your unique phrase here');
-define('NONCE_KEY',        getenv('NONCE_KEY') ?: 'put your unique phrase here');
-define('AUTH_SALT',        getenv('AUTH_SALT') ?: 'put your unique phrase here');
-define('SECURE_AUTH_SALT', getenv('SECURE_AUTH_SALT') ?: 'put your unique phrase here');
-define('LOGGED_IN_SALT',   getenv('LOGGED_IN_SALT') ?: 'put your unique phrase here');
-define('NONCE_SALT',       getenv('NONCE_SALT') ?: 'put your unique phrase here');
+define('AUTH_KEY',         get_env_var('AUTH_KEY'));
+define('SECURE_AUTH_KEY',  get_env_var('SECURE_AUTH_KEY'));
+define('LOGGED_IN_KEY',    get_env_var('LOGGED_IN_KEY'));
+define('NONCE_KEY',        get_env_var('NONCE_KEY'));
+define('AUTH_SALT',        get_env_var('AUTH_SALT'));
+define('SECURE_AUTH_SALT', get_env_var('SECURE_AUTH_SALT'));
+define('LOGGED_IN_SALT',   get_env_var('LOGGED_IN_SALT'));
+define('NONCE_SALT',       get_env_var('NONCE_SALT'));
 
 // WordPress Database Table prefix
 $table_prefix = 'wp_';
