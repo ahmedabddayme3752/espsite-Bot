@@ -77,17 +77,23 @@ RUN curl -O https://wordpress.org/latest.tar.gz && \
     cp -r wordpress/* . && \
     rm -rf wordpress latest.tar.gz
 
+# Create custom db.php drop-in
+RUN echo '<?php\n\
+error_log("[WordPress] Loading custom db.php drop-in");\n\
+if (!defined("ABSPATH")) { define("ABSPATH", dirname(__FILE__) . "/"); }\n\
+require_once(ABSPATH . "wp-content/plugins/pg4wp/db.php");\n\
+error_log("[WordPress] Loaded pg4wp adapter from custom db.php drop-in");' > /var/www/html/wp-content/db.php && \
+    chown www-data:www-data /var/www/html/wp-content/db.php && \
+    chmod 644 /var/www/html/wp-content/db.php
+
 # Install pg4wp adapter
 RUN mkdir -p /var/www/html/wp-content/plugins/pg4wp && \
     mkdir -p /var/www/html/wp-content/plugins/pg4wp/driver_pgsql && \
     curl -o /var/www/html/wp-content/plugins/pg4wp/db.php https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/db.php && \
     curl -o /var/www/html/wp-content/plugins/pg4wp/driver_pgsql/version.php https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/driver_pgsql/version.php && \
     curl -o /var/www/html/wp-content/plugins/pg4wp/driver_pgsql.php https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/driver_pgsql.php && \
-    cp /var/www/html/wp-content/plugins/pg4wp/db.php /var/www/html/wp-content/db.php && \
-    cp /var/www/html/wp-content/plugins/pg4wp/db.php /var/www/html/wp-db.php && \
     chown -R www-data:www-data /var/www/html/wp-content && \
-    chmod -R 755 /var/www/html/wp-content && \
-    chmod 644 /var/www/html/wp-db.php
+    chmod -R 755 /var/www/html/wp-content
 
 # Copy configuration files
 COPY wp-config-render.php /var/www/html/wp-config.php
