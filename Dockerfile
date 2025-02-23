@@ -114,7 +114,9 @@ RUN apt-get update && \
     apt-get clean
 
 # Install MySQL client
-RUN apt-get update && apt-get install -y mysql-client
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends mysql-client && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install PostgreSQL dependencies
 RUN apt-get update && apt-get install -y \
