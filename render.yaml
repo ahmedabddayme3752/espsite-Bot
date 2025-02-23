@@ -17,7 +17,7 @@ services:
       - key: DB_PASSWORD
         sync: false
       - key: DB_HOST
-        value: mysql.internal
+        value: mysql
       - key: DB_PORT
         value: "3306"
       - key: WP_DEBUG
@@ -30,6 +30,8 @@ services:
     numInstances: 1
     domains:
       - espbot.onrender.com
+    dependsOn:
+      - mysql
 
   - type: pserv
     name: mysql

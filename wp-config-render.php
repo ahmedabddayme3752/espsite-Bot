@@ -35,7 +35,7 @@ function get_env_var($name, $default = null) {
 $db_name = get_env_var('DB_NAME', 'wordpress');
 $db_user = get_env_var('DB_USER', 'wordpress');
 $db_password = get_env_var('DB_PASSWORD');
-$db_host = get_env_var('DB_HOST', 'mysql.internal');
+$db_host = get_env_var('DB_HOST', 'mysql');
 $db_port = get_env_var('DB_PORT', '3306');
 
 error_log('[WordPress] Attempting database connection with:');
@@ -44,23 +44,45 @@ error_log("[WordPress] Database: $db_name");
 error_log("[WordPress] User: $db_user");
 error_log("[WordPress] Password length: " . ($db_password ? strlen($db_password) : 0));
 
-// Test database connection
-try {
-    $mysqli = new mysqli($db_host, $db_user, $db_password, $db_name, $db_port);
-    
-    if ($mysqli->connect_error) {
-        error_log('[WordPress] MySQL Connection Error: ' . $mysqli->connect_error);
-        error_log('[WordPress] MySQL Error Number: ' . $mysqli->connect_errno);
-        throw new Exception('Database connection error: ' . $mysqli->connect_error);
+// Test database connection with retry logic
+$max_retries = 5;
+$retry_delay = 5; // seconds
+
+for ($i = 0; $i < $max_retries; $i++) {
+    try {
+        error_log("[WordPress] Connection attempt " . ($i + 1) . " of $max_retries");
+        $mysqli = new mysqli($db_host, $db_user, $db_password, $db_name, intval($db_port));
+        
+        if ($mysqli->connect_error) {
+            error_log('[WordPress] MySQL Connection Error: ' . $mysqli->connect_error);
+            error_log('[WordPress] MySQL Error Number: ' . $mysqli->connect_errno);
+            
+            if ($i < $max_retries - 1) {
+                error_log("[WordPress] Retrying in $retry_delay seconds...");
+                sleep($retry_delay);
+                continue;
+            }
+            
+            throw new Exception('Database connection error: ' . $mysqli->connect_error);
+        }
+        
+        error_log('[WordPress] Successfully connected to MySQL');
+        $mysqli->close();
+        break;
+        
+    } catch (Exception $e) {
+        if ($i < $max_retries - 1) {
+            error_log('[WordPress] Exception: ' . $e->getMessage());
+            error_log("[WordPress] Retrying in $retry_delay seconds...");
+            sleep($retry_delay);
+            continue;
+        }
+        
+        error_log('[WordPress] All connection attempts failed');
+        error_log('[WordPress] Final Exception: ' . $e->getMessage());
+        error_log('[WordPress] Stack trace: ' . $e->getTraceAsString());
+        die('Database connection error after ' . $max_retries . ' attempts: ' . $e->getMessage());
     }
-    
-    error_log('[WordPress] Successfully connected to MySQL');
-    $mysqli->close();
-    
-} catch (Exception $e) {
-    error_log('[WordPress] Exception: ' . $e->getMessage());
-    error_log('[WordPress] Stack trace: ' . $e->getTraceAsString());
-    die('Database connection error: ' . $e->getMessage());
 }
 
 /** MySQL settings */
