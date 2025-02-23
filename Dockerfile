@@ -25,8 +25,7 @@ RUN docker-php-ext-configure gd --with-jpeg --with-webp && \
     pgsql \
     gd \
     zip \
-    opcache \
-    mysqli
+    opcache
 
 # Configure PHP for WordPress
 RUN { \
@@ -110,6 +109,12 @@ RewriteRule ^index\.php$ - [L]\n\
 RewriteCond %{REQUEST_FILENAME} !-f\n\
 RewriteCond %{REQUEST_FILENAME} !-d\n\
 RewriteRule . /index.php [L]' > /var/www/html/.htaccess
+
+# Remove MySQL dependencies
+RUN apt-get update && \
+    apt-get remove --purge -y mysql-client mariadb-client* && \
+    apt-get autoremove -y && \
+    apt-get clean
 
 # Install PostgreSQL dependencies
 RUN apt-get update && apt-get install -y \

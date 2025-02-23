@@ -13,6 +13,7 @@ ini_set('log_errors', 1);
 define('DB_DRIVER', 'pgsql');
 define('DB_TYPE', 'pgsql');
 define('PG4WP_DEBUG', true);
+define('WP_USE_EXT_MYSQL', false);
 
 // Load pg4wp adapter BEFORE any WordPress files
 $pg4wp_path = ABSPATH . 'wp-content/plugins/pg4wp/db.php';
