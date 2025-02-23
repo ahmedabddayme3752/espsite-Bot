@@ -35,18 +35,13 @@ error_log('[WordPress] Environment variables dump:');
 foreach ($_ENV as $key => $value) {
     error_log("[WordPress] $_ENV[$key]: $value");
 }
-foreach ($_SERVER as $key => $value) {
-    if (is_string($value)) {
-        error_log("[WordPress] $_SERVER[$key]: $value");
-    }
-}
 
 // Database settings
-$db_name = get_env_var('MYSQL_DATABASE', 'wordpress');
-$db_user = get_env_var('MYSQL_USER', 'wordpress');
-$db_password = get_env_var('MYSQL_PASSWORD');
-$db_host = get_env_var('MYSQL_HOST', 'mysql');
-$db_port = get_env_var('MYSQL_PORT', '3306');
+$db_name = get_env_var('DB_NAME', 'wordpress');
+$db_user = get_env_var('DB_USER', 'wordpress');
+$db_password = get_env_var('DB_PASSWORD');
+$db_host = get_env_var('DB_HOST', 'mysql');
+$db_port = get_env_var('DB_PORT', '3306');
 
 error_log('[WordPress] Database configuration:');
 error_log("[WordPress] DB_NAME: $db_name");
@@ -76,14 +71,14 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROT
 /**
  * Authentication Unique Keys and Salts.
  */
-define('AUTH_KEY',         get_env_var('AUTH_KEY', 'unique-key-1'));
-define('SECURE_AUTH_KEY',  get_env_var('SECURE_AUTH_KEY', 'unique-key-2'));
-define('LOGGED_IN_KEY',    get_env_var('LOGGED_IN_KEY', 'unique-key-3'));
-define('NONCE_KEY',        get_env_var('NONCE_KEY', 'unique-key-4'));
-define('AUTH_SALT',        get_env_var('AUTH_SALT', 'unique-salt-1'));
-define('SECURE_AUTH_SALT', get_env_var('SECURE_AUTH_SALT', 'unique-salt-2'));
-define('LOGGED_IN_SALT',   get_env_var('LOGGED_IN_SALT', 'unique-salt-3'));
-define('NONCE_SALT',       get_env_var('NONCE_SALT', 'unique-salt-4'));
+define('AUTH_KEY',         'K8:}3Ne*4XP&UWm9v#2$dQ5^jH@xYc');
+define('SECURE_AUTH_KEY',  'T6#kM2!nR9$vL4@pX7*wJ5^yB');
+define('LOGGED_IN_KEY',    'F3%mP8#qN5@vK2$xL7*wY9^tH');
+define('NONCE_KEY',        'B7#nK4!mX9$vP2@tL5*wY8^yQ');
+define('AUTH_SALT',        'M4#kP7!nX2$vL9@tH5*wY8^qB');
+define('SECURE_AUTH_SALT', 'R6#mN9!kX4$vP2@tL7*wY3^qH');
+define('LOGGED_IN_SALT',   'T8#kP5!nX2$vL4@tH7*wY9^qM');
+define('NONCE_SALT',       'W3#mK7!nX9$vP4@tL5*wY2^qB');
 
 // WordPress Database Table prefix
 $table_prefix = 'wp_';

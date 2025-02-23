@@ -10,14 +10,18 @@ services:
     envVars:
       - key: PORT
         value: "10000"
-      - key: MYSQL_HOST
+      - key: DB_NAME
+        value: wordpress
+      - key: DB_USER
+        value: wordpress
+      - key: DB_PASSWORD
+        value: wp_db_pass_8x4K9m2P#vL$
+      - key: DB_HOST
         value: mysql
-      - key: MYSQL_PORT
+      - key: DB_PORT
         value: "3306"
       - key: WP_DEBUG
         value: "true"
-    envGroups:
-      - name: wordpress-config
     disk:
       name: wordpress-data
       mountPath: /var/www/html
@@ -38,5 +42,12 @@ services:
       name: mysql-data
       mountPath: /var/lib/mysql
       sizeGB: 10
-    envGroups:
-      - name: wordpress-config
+    envVars:
+      - key: MYSQL_DATABASE
+        value: wordpress
+      - key: MYSQL_USER
+        value: wordpress
+      - key: MYSQL_PASSWORD
+        value: wp_db_pass_8x4K9m2P#vL$
+      - key: MYSQL_ROOT_PASSWORD
+        value: root_pass_N7q#mK9$pL2@
