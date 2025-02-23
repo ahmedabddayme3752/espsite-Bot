@@ -29,7 +29,7 @@ variables:
 web:
     locations:
         "/":
-            root: "/"
+            root: ""
             index:
                 - index.php
             expires: -1
