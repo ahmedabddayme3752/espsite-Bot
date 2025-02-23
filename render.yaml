@@ -36,6 +36,8 @@ services:
           property: host
       - key: MYSQL_PORT
         value: "3306"
+    envGroups:
+      - name: wordpress-env
     disk:
       name: wordpress-data
       mountPath: /var/www/html

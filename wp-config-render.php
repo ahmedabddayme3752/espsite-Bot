@@ -10,16 +10,23 @@ ini_set('log_errors', 1);
 
 // Log environment variables for debugging
 error_log('[WordPress] Database environment variables:');
-error_log('[WordPress] MYSQL_HOST: ' . getenv('MYSQL_HOST'));
-error_log('[WordPress] MYSQL_DATABASE: ' . getenv('MYSQL_DATABASE'));
-error_log('[WordPress] MYSQL_USER: ' . getenv('MYSQL_USER'));
-error_log('[WordPress] MYSQL_PORT: ' . getenv('MYSQL_PORT'));
+foreach ($_ENV as $key => $value) {
+    if (strpos($key, 'MYSQL_') === 0) {
+        error_log("[WordPress] $key: $value");
+    }
+}
 
 // ** MySQL settings - You can get this info from your web host ** //
+$db_port = getenv('MYSQL_PORT') ?: '3306';
+$db_host = getenv('MYSQL_HOST');
+if ($db_host) {
+    $db_host .= ':' . $db_port;
+}
+
 define('DB_NAME', getenv('MYSQL_DATABASE'));
 define('DB_USER', getenv('MYSQL_USER'));
 define('DB_PASSWORD', getenv('MYSQL_PASSWORD'));
-define('DB_HOST', getenv('MYSQL_HOST') . ':' . (getenv('MYSQL_PORT') ?: '3306'));
+define('DB_HOST', $db_host);
 define('DB_CHARSET', 'utf8');
 define('DB_COLLATE', '');
 
