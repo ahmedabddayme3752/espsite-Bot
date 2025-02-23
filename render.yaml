@@ -1,40 +1,6 @@
 services:
-  - type: web
-    name: wordpress
-    env: docker
-    plan: free
-    region: oregon
-    buildCommand: docker build -t wordpress-app .
-    startCommand: /usr/local/bin/start.sh
-    autoDeploy: true
-    envVars:
-      - key: PORT
-        value: "10000"
-      - key: DB_NAME
-        value: wordpress
-      - key: DB_USER
-        value: wordpress
-      - key: DB_PASSWORD
-        sync: false
-      - key: DB_HOST
-        value: mysql
-      - key: DB_PORT
-        value: "3306"
-      - key: WP_DEBUG
-        value: "true"
-    disk:
-      name: wordpress-data
-      mountPath: /var/www/html
-      sizeGB: 10
-    healthCheckPath: /wp-admin/install.php
-    numInstances: 1
-    domains:
-      - espbot.onrender.com
-    dependsOn:
-      - mysql
-
   - type: pserv
-    name: mysql
+    name: mysql-db
     env: docker
     plan: free
     region: oregon
@@ -54,3 +20,37 @@ services:
       - key: MYSQL_ROOT_PASSWORD
         generateValue: true
     ipAllowList: []
+
+  - type: web
+    name: wordpress
+    env: docker
+    plan: free
+    region: oregon
+    buildCommand: docker build -t wordpress-app .
+    startCommand: /usr/local/bin/start.sh
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: DB_NAME
+        value: wordpress
+      - key: DB_USER
+        value: wordpress
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_HOST
+        value: mysql-db.internal
+      - key: DB_PORT
+        value: "3306"
+      - key: WP_DEBUG
+        value: "true"
+    disk:
+      name: wordpress-data
+      mountPath: /var/www/html
+      sizeGB: 10
+    healthCheckPath: /wp-admin/install.php
+    numInstances: 1
+    domains:
+      - espbot.onrender.com
+    dependsOn:
+      - mysql-db

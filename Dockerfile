@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     git \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure GD extension
@@ -73,12 +74,22 @@ RewriteCond %{REQUEST_FILENAME} !-f\n\
 RewriteCond %{REQUEST_FILENAME} !-d\n\
 RewriteRule . /index.php [L]' > /var/www/html/.htaccess
 
+# Create wait-for-mysql script
+RUN echo '#!/bin/bash\n\
+echo "Waiting for MySQL..."\n\
+while ! nc -z $DB_HOST $DB_PORT; do\n\
+  sleep 1\n\
+done\n\
+echo "MySQL is up - starting Apache"\n\
+apache2-foreground' > /usr/local/bin/wait-for-mysql.sh && \
+    chmod +x /usr/local/bin/wait-for-mysql.sh
+
 # Create start script with port configuration
 RUN echo '#!/bin/bash\n\
 PORT="${PORT:-10000}"\n\
-echo "Listen \${PORT}" > /etc/apache2/ports.conf\n\
+echo "Listen ${PORT}" > /etc/apache2/ports.conf\n\
 sed -i "s/\${PORT}/$PORT/" /etc/apache2/sites-available/000-default.conf\n\
-apache2-foreground' > /usr/local/bin/start.sh && \
+/usr/local/bin/wait-for-mysql.sh' > /usr/local/bin/start.sh && \
     chmod +x /usr/local/bin/start.sh
 
 # Copy WordPress config
