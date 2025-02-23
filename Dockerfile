@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y postgresql-client
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-jpeg && \
-    docker-php-ext-install -j$(nproc) pdo_pgsql pgsql opcache
+    docker-php-ext-install -j$(nproc) pdo_pgsql pgsql opcache mysqli pdo_mysql
 
 # Configure PHP for WordPress
 RUN { \

@@ -10,10 +10,10 @@ ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 
 // Define database type for pg4wp
-define('DB_DRIVER', 'pgsql');
-define('DB_TYPE', 'pgsql');
-define('PG4WP_DEBUG', true);
-define('WP_USE_EXT_MYSQL', false);
+define('DB_DRIVER', 'mysql');
+define('DB_TYPE', 'mysql');
+define('PG4WP_DEBUG', false);
+define('WP_USE_EXT_MYSQL', true);
 
 // Load pg4wp adapter BEFORE any WordPress files
 $pg4wp_path = ABSPATH . 'wp-content/plugins/pg4wp/db.php';
@@ -54,22 +54,17 @@ if (!$url || !isset($url['path']) || !isset($url['user']) || !isset($url['pass']
 }
 
 // Database connection settings
-$host = $url['host'];
-$port = $url['port'] ?? '5432';
-$dbname = ltrim($url['path'], '/');
-
-define('DB_NAME', $dbname);
-define('DB_USER', $url['user']);
-define('DB_PASSWORD', $url['pass']);
-define('DB_HOST', $host);
-define('DB_PORT', $port);
+define('DB_NAME', 'wordpress_ygs8');
+define('DB_USER', 'wordpress_ygs8_user');
+define('DB_PASSWORD', 'dweBiZQA7O8ysGexzvBhOeSKiUfOZnlV');
+define('DB_HOST', 'dpg-cusvgi0gph6c73atsci0-a:3306');
 define('DB_CHARSET', 'utf8');
 define('DB_COLLATE', '');
 
 // Test database connection
 try {
     $dbh = new PDO(
-        "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";sslmode=require",
+        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME,
         DB_USER,
         DB_PASSWORD,
         array(
@@ -77,7 +72,7 @@ try {
         )
     );
     error_log('[WordPress] SUCCESS: Database connection established successfully');
-    error_log('[WordPress] INFO: Connected to PostgreSQL database at ' . DB_HOST);
+    error_log('[WordPress] INFO: Connected to MySQL database at ' . DB_HOST);
     $dbh = null; // Close the test connection
 } catch (PDOException $e) {
     error_log('[WordPress] ERROR: Database connection failed - ' . $e->getMessage());

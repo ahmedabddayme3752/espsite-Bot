@@ -1,7 +1,7 @@
 databases:
   - name: wordpressdb
     plan: free
-    type: postgresql
+    type: mysql
     region: oregon
 
 services:
