@@ -10,34 +10,14 @@ services:
     envVars:
       - key: PORT
         value: "10000"
-      - key: MYSQL_DATABASE
-        value: wordpress
-      - key: MYSQL_USER
-        value: wordpress
-      - key: MYSQL_PASSWORD
-        generateValue: true
       - key: MYSQL_HOST
         value: mysql
       - key: MYSQL_PORT
         value: "3306"
       - key: WP_DEBUG
         value: "true"
-      - key: AUTH_KEY
-        generateValue: true
-      - key: SECURE_AUTH_KEY
-        generateValue: true
-      - key: LOGGED_IN_KEY
-        generateValue: true
-      - key: NONCE_KEY
-        generateValue: true
-      - key: AUTH_SALT
-        generateValue: true
-      - key: SECURE_AUTH_SALT
-        generateValue: true
-      - key: LOGGED_IN_SALT
-        generateValue: true
-      - key: NONCE_SALT
-        generateValue: true
+    envGroups:
+      - name: wordpress-config
     disk:
       name: wordpress-data
       mountPath: /var/www/html
@@ -58,15 +38,5 @@ services:
       name: mysql-data
       mountPath: /var/lib/mysql
       sizeGB: 10
-    envVars:
-      - key: MYSQL_DATABASE
-        value: wordpress
-      - key: MYSQL_USER
-        value: wordpress
-      - key: MYSQL_PASSWORD
-        fromService:
-          type: web
-          name: wordpress
-          envVarKey: MYSQL_PASSWORD
-      - key: MYSQL_ROOT_PASSWORD
-        generateValue: true
+    envGroups:
+      - name: wordpress-config
