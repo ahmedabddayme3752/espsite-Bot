@@ -4,7 +4,7 @@ services:
     env: docker
     dockerfilePath: ./Dockerfile
     plan: free
-    healthCheckPath: /
+    healthCheckPath: /wp-admin/install.php
     envVars:
       - key: WORDPRESS_DB_HOST
         value: mysql-db.internal
@@ -16,11 +16,6 @@ services:
         value: MySecurePass123!@#
       - key: WORDPRESS_DEBUG
         value: "1"
-      - key: WORDPRESS_HOME
-        fromService:
-          name: wordpress
-          type: web
-          property: url
     disk:
       name: wordpress-data
       mountPath: /var/www/html
@@ -35,6 +30,7 @@ services:
     env: docker
     plan: free
     image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password --bind-address=0.0.0.0
     disk:
       name: mysql-data
       mountPath: /var/lib/mysql
@@ -48,6 +44,4 @@ services:
         value: MySecurePass123!@#
       - key: MYSQL_ROOT_PASSWORD
         generateValue: true
-      - key: MYSQL_TCP_PORT
-        value: "3306"
     ipAllowList: []
