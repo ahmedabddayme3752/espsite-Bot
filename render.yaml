@@ -20,6 +20,8 @@ services:
         fromDatabase:
           name: wordpressdb
           property: connectionString
+      - key: DB_PORT
+        value: "3306"
       - key: WORDPRESS_CONFIG_EXTRA
         value: |
           define('FORCE_SSL_ADMIN', true);

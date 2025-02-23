@@ -68,7 +68,8 @@ try {
         DB_USER,
         DB_PASSWORD,
         array(
-            PDO::ATTR_PERSISTENT => true
+            PDO::MYSQL_ATTR_SSL_CA => '/etc/ssl/certs/ca-certificates.crt',
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         )
     );
     error_log('[WordPress] SUCCESS: Database connection established successfully');
