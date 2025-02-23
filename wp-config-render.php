@@ -8,40 +8,65 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 
-// Helper function to get environment variables
-function get_env_var($name) {
+// Helper function to get environment variables with more robust checking
+function get_env_var($name, $default = null) {
+    // Try getenv first
     $value = getenv($name);
-    if ($value === false && isset($_ENV[$name])) {
-        $value = $_ENV[$name];
+    if ($value !== false) {
+        return $value;
     }
-    error_log("[WordPress] $name: " . ($value ?: 'not set'));
-    return $value;
+    
+    // Then try $_ENV
+    if (isset($_ENV[$name])) {
+        return $_ENV[$name];
+    }
+    
+    // Then try $_SERVER
+    if (isset($_SERVER[$name])) {
+        return $_SERVER[$name];
+    }
+    
+    // Finally return default
+    return $default;
 }
 
-// Log environment variables for debugging
-error_log('[WordPress] Database environment variables:');
-$db_name = get_env_var('MYSQL_DATABASE');
-$db_user = get_env_var('MYSQL_USER');
-$db_password = get_env_var('MYSQL_PASSWORD');
-$db_host = get_env_var('MYSQL_HOST');
-$db_port = get_env_var('MYSQL_PORT') ?: '3306';
+// Log all environment variables for debugging
+error_log('[WordPress] Environment variables dump:');
+foreach ($_ENV as $key => $value) {
+    error_log("[WordPress] $_ENV[$key]: $value");
+}
+foreach ($_SERVER as $key => $value) {
+    if (is_string($value)) {
+        error_log("[WordPress] $_SERVER[$key]: $value");
+    }
+}
 
-// ** MySQL settings - You can get this info from your web host ** //
+// Database settings
+$db_name = get_env_var('MYSQL_DATABASE', 'wordpress');
+$db_user = get_env_var('MYSQL_USER', 'wordpress');
+$db_password = get_env_var('MYSQL_PASSWORD');
+$db_host = get_env_var('MYSQL_HOST', 'mysql');
+$db_port = get_env_var('MYSQL_PORT', '3306');
+
+error_log('[WordPress] Database configuration:');
+error_log("[WordPress] DB_NAME: $db_name");
+error_log("[WordPress] DB_USER: $db_user");
+error_log("[WordPress] DB_HOST: $db_host:$db_port");
+error_log('[WordPress] DB_PASSWORD: ' . ($db_password ? 'set' : 'not set'));
+
+// Check required database settings
+if (!$db_password) {
+    error_log('[WordPress] ERROR: Required database password is not set');
+    die('Database configuration error: Required password is not set.');
+}
+
+/** MySQL settings */
 define('DB_NAME', $db_name);
 define('DB_USER', $db_user);
 define('DB_PASSWORD', $db_password);
-define('DB_HOST', $db_host ? $db_host . ':' . $db_port : null);
+define('DB_HOST', "$db_host:$db_port");
 define('DB_CHARSET', 'utf8');
 define('DB_COLLATE', '');
-
-// Check database settings
-if (!DB_NAME || !DB_USER || !DB_PASSWORD || !DB_HOST) {
-    error_log('[WordPress] ERROR: Required database environment variables are not set');
-    error_log('[WordPress] DB_NAME: ' . DB_NAME);
-    error_log('[WordPress] DB_USER: ' . DB_USER);
-    error_log('[WordPress] DB_HOST: ' . DB_HOST);
-    die('Database configuration error: Required environment variables are not set.');
-}
 
 // Set up HTTPS if behind proxy
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
@@ -51,14 +76,14 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROT
 /**
  * Authentication Unique Keys and Salts.
  */
-define('AUTH_KEY',         get_env_var('AUTH_KEY'));
-define('SECURE_AUTH_KEY',  get_env_var('SECURE_AUTH_KEY'));
-define('LOGGED_IN_KEY',    get_env_var('LOGGED_IN_KEY'));
-define('NONCE_KEY',        get_env_var('NONCE_KEY'));
-define('AUTH_SALT',        get_env_var('AUTH_SALT'));
-define('SECURE_AUTH_SALT', get_env_var('SECURE_AUTH_SALT'));
-define('LOGGED_IN_SALT',   get_env_var('LOGGED_IN_SALT'));
-define('NONCE_SALT',       get_env_var('NONCE_SALT'));
+define('AUTH_KEY',         get_env_var('AUTH_KEY', 'unique-key-1'));
+define('SECURE_AUTH_KEY',  get_env_var('SECURE_AUTH_KEY', 'unique-key-2'));
+define('LOGGED_IN_KEY',    get_env_var('LOGGED_IN_KEY', 'unique-key-3'));
+define('NONCE_KEY',        get_env_var('NONCE_KEY', 'unique-key-4'));
+define('AUTH_SALT',        get_env_var('AUTH_SALT', 'unique-salt-1'));
+define('SECURE_AUTH_SALT', get_env_var('SECURE_AUTH_SALT', 'unique-salt-2'));
+define('LOGGED_IN_SALT',   get_env_var('LOGGED_IN_SALT', 'unique-salt-3'));
+define('NONCE_SALT',       get_env_var('NONCE_SALT', 'unique-salt-4'));
 
 // WordPress Database Table prefix
 $table_prefix = 'wp_';
@@ -67,7 +92,7 @@ $table_prefix = 'wp_';
 define('WPLANG', '');
 
 // Debug settings
-define('WP_DEBUG', true);
+define('WP_DEBUG', filter_var(get_env_var('WP_DEBUG', 'false'), FILTER_VALIDATE_BOOLEAN));
 define('WP_DEBUG_LOG', true);
 define('WP_DEBUG_DISPLAY', true);
 

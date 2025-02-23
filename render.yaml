@@ -13,11 +13,11 @@ services:
       - key: MYSQL_DATABASE
         value: wordpress
       - key: MYSQL_USER
-        value: wordpress_user
+        value: wordpress
       - key: MYSQL_PASSWORD
         generateValue: true
       - key: MYSQL_HOST
-        value: localhost
+        value: mysql
       - key: MYSQL_PORT
         value: "3306"
       - key: WP_DEBUG
@@ -46,3 +46,27 @@ services:
     numInstances: 1
     domains:
       - espbot.onrender.com
+
+  - type: pserv
+    name: mysql
+    env: docker
+    plan: free
+    region: oregon
+    image:
+      url: mysql:8.0
+    disk:
+      name: mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 10
+    envVars:
+      - key: MYSQL_DATABASE
+        value: wordpress
+      - key: MYSQL_USER
+        value: wordpress
+      - key: MYSQL_PASSWORD
+        fromService:
+          type: web
+          name: wordpress
+          envVarKey: MYSQL_PASSWORD
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true
