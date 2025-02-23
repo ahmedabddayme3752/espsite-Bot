@@ -65,9 +65,20 @@ mounts:
 hooks:
     build: |
         set -e
+        # Download and extract WordPress
         curl -o wordpress.tar.gz -fL "https://wordpress.org/latest.tar.gz"
         tar -xzf wordpress.tar.gz
         rm wordpress.tar.gz
+        
+        # Copy custom plugins
+        mkdir -p wordpress/wp-content/plugins
+        cp -r wp-content/plugins/espbot wordpress/wp-content/plugins/
+        
+        # Copy custom themes
+        mkdir -p wordpress/wp-content/themes
+        cp -r wp-content/themes/espbot wordpress/wp-content/themes/
+        
+        # Copy WordPress configuration
         cp wp-config-render.php wordpress/wp-config.php
     deploy: |
         cd wordpress
