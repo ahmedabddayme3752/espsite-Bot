@@ -56,7 +56,6 @@ apache2-foreground' > /usr/local/bin/start.sh && \
 
 # Configure WordPress database adapter
 RUN mkdir -p /var/www/html/wp-content/plugins/pg4wp && \
-    ln -sf /var/www/html/wp-content/plugins/pg4wp/db.php /var/www/html/wp-content/db.php && \
     chown -R www-data:www-data /var/www/html
 
 # Set environment variables
@@ -71,19 +70,23 @@ EXPOSE 10000
 
 # Download and install WordPress
 RUN curl -O https://wordpress.org/latest.tar.gz && \
-    tar -xvf latest.tar.gz --strip-components=1 && \
-    rm latest.tar.gz && \
-    # Create pg4wp directory and download
-    mkdir -p wp-content/plugins/pg4wp && \
-    curl -o wp-content/plugins/pg4wp/db.php https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/db.php && \
-    # Set permissions
-    chown -R www-data:www-data . && \
-    chmod -R 755 wp-content/plugins/pg4wp && \
-    find . -type d -exec chmod 755 {} \; && \
-    find . -type f -exec chmod 644 {} \;
+    tar -xzf latest.tar.gz && \
+    cp -r wordpress/* . && \
+    rm -rf wordpress latest.tar.gz
 
-# Create wp-config.php from environment variables
+# Install pg4wp adapter
+RUN mkdir -p /var/www/html/wp-content/plugins/pg4wp && \
+    curl -o /var/www/html/wp-content/plugins/pg4wp/db.php https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/db.php && \
+    chmod 644 /var/www/html/wp-content/plugins/pg4wp/db.php && \
+    cp /var/www/html/wp-content/plugins/pg4wp/db.php /var/www/html/wp-content/db.php
+
+# Copy configuration files
 COPY wp-config-render.php /var/www/html/wp-config.php
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html && \
+    find /var/www/html -type d -exec chmod 755 {} \; && \
+    find /var/www/html -type f -exec chmod 644 {} \;
 
 # Create .htaccess
 RUN echo 'RewriteEngine On\n\
