@@ -1,26 +1,12 @@
-services:
-  # First, define the MySQL service
-  - type: pserv
-    name: wordpressdb
-    env: docker
+databases:
+  - name: mysql
+    databaseName: wordpress
+    user: wordpress
     plan: free
     region: oregon
-    disk:
-      name: mysql-data
-      mountPath: /var/lib/mysql
-      sizeGB: 10
-    envVars:
-      - key: MYSQL_DATABASE
-        value: wordpress
-      - key: MYSQL_USER
-        value: wpuser
-      - key: MYSQL_PASSWORD
-        generateValue: true
-      - key: MYSQL_ROOT_PASSWORD
-        generateValue: true
-    dockerCommand: mysqld --default-authentication-plugin=mysql_native_password
-    
-  # Then, define the WordPress service
+    type: mysql
+
+services:
   - type: web
     name: wordpress
     env: docker
@@ -33,45 +19,28 @@ services:
       - key: PORT
         value: "10000"
       - key: MYSQL_DATABASE
-        sync: false
-        value: wordpress
+        fromDatabase:
+          name: mysql
+          property: database
       - key: MYSQL_USER
-        sync: false
-        value: wpuser
+        fromDatabase:
+          name: mysql
+          property: user
       - key: MYSQL_PASSWORD
-        sync: false
-        fromService:
-          type: pserv
-          name: wordpressdb
-          envVarKey: MYSQL_PASSWORD
+        fromDatabase:
+          name: mysql
+          property: password
       - key: MYSQL_HOST
-        sync: false
-        fromService:
-          type: pserv
-          name: wordpressdb
+        fromDatabase:
+          name: mysql
           property: host
-      - key: DB_PORT
+      - key: MYSQL_PORT
         value: "3306"
-      - key: WORDPRESS_CONFIG_EXTRA
-        value: |
-          define('FORCE_SSL_ADMIN', true);
-          define('WP_MEMORY_LIMIT', '256M');
-          if ($_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
-            $_SERVER['HTTPS'] = 'on';
-            define('FORCE_SSL_ADMIN', true);
-            define('FORCE_SSL_LOGIN', true);
-          }
-      - key: WP_DEBUG
-        value: "true"
-      - key: WP_CACHE
-        value: "true"
-      - key: WP_AUTO_UPDATE_CORE
-        value: "false"
     disk:
       name: wordpress-data
       mountPath: /var/www/html
       sizeGB: 10
-    healthCheckPath: /
+    healthCheckPath: /wp-admin/install.php
     numInstances: 1
     domains:
       - espbot.onrender.com
