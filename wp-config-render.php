@@ -53,23 +53,25 @@ if (!$url || !isset($url['path']) || !isset($url['user']) || !isset($url['pass']
 }
 
 // Database connection settings
-define('DB_NAME', ltrim($url['path'], '/'));
+$host = $url['host'];
+$port = $url['port'] ?? '5432';
+$dbname = ltrim($url['path'], '/');
+
+define('DB_NAME', $dbname);
 define('DB_USER', $url['user']);
 define('DB_PASSWORD', $url['pass']);
-define('DB_HOST', $url['host'] . ':' . $url['port'] . '?sslmode=require');
-define('DB_PORT', $url['port'] ?? 5432);
+define('DB_HOST', $host);
+define('DB_PORT', $port);
 define('DB_CHARSET', 'utf8');
 define('DB_COLLATE', '');
 
 // Test database connection
 try {
     $dbh = new PDO(
-        "pgsql:host=" . DB_HOST,
+        "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";sslmode=require",
         DB_USER,
         DB_PASSWORD,
         array(
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_TIMEOUT => 5,
             PDO::ATTR_PERSISTENT => true
         )
     );
