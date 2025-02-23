@@ -41,14 +41,16 @@ RUN a2enmod rewrite headers && \
     a2dismod -f autoindex
 
 # Configure Apache
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf && \
-    sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
+RUN sed -i 's/Listen 80/Listen ${PORT:-80}/g' /etc/apache2/ports.conf && \
+    sed -i 's/:80/:${PORT:-80}/g' /etc/apache2/sites-available/000-default.conf && \
+    sed -i 's/ServerName www.example.com/ServerName localhost/g' /etc/apache2/sites-available/000-default.conf
+
+# Set environment variables
+ENV PORT=80
+ENV APACHE_PORT=80
 
 # Configure Apache virtual host
 RUN sed -i 's/VirtualHost \*:80/VirtualHost *:${PORT}/g' /etc/apache2/sites-available/000-default.conf
-
-# Make port configurable
-ENV PORT=10000
 
 # Expose the port
 EXPOSE ${PORT}
@@ -72,6 +74,15 @@ RUN curl -O https://wordpress.org/latest.tar.gz && \
     chmod -R 755 wp-content/plugins/pg4wp && \
     find . -type d -exec chmod 755 {} \; && \
     find . -type f -exec chmod 644 {} \;
+
+# Configure WordPress database adapter
+RUN mkdir -p /var/www/html/wp-content/plugins/pg4wp && \
+    ln -sf /var/www/html/wp-content/plugins/pg4wp/db.php /var/www/html/wp-content/db.php && \
+    chown -R www-data:www-data /var/www/html
+
+# Set environment variables
+ENV PORT=80
+ENV APACHE_PORT=80
 
 # Create wp-config.php from environment variables
 COPY wp-config-render.php /var/www/html/wp-config.php
@@ -126,4 +137,4 @@ RUN apt-get update && apt-get install -y \
     && update-ca-certificates
 
 # Set the default command
-CMD ["sh", "-c", "apache2-foreground"]
+CMD ["apache2-foreground"]
