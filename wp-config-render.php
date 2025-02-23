@@ -9,79 +9,26 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 
-// Define database type for pg4wp
-define('DB_DRIVER', 'mysql');
-define('DB_TYPE', 'mysql');
-define('PG4WP_DEBUG', false);
-define('WP_USE_EXT_MYSQL', true);
-
-// Load pg4wp adapter BEFORE any WordPress files
-$pg4wp_path = ABSPATH . 'wp-content/plugins/pg4wp/db.php';
-$db_php_path = ABSPATH . 'wp-content/db.php';
-
-error_log('[WordPress] Looking for pg4wp at: ' . $pg4wp_path);
-error_log('[WordPress] Looking for db.php at: ' . $db_php_path);
-
-if (!file_exists($pg4wp_path)) {
-    error_log('[WordPress] ERROR: pg4wp adapter not found at: ' . $pg4wp_path);
-    die('PostgreSQL adapter error: pg4wp adapter not found. Please check your installation.');
-}
-
-if (!file_exists($db_php_path)) {
-    error_log('[WordPress] WARNING: db.php not found in wp-content. Attempting to copy from pg4wp...');
-    if (!copy($pg4wp_path, $db_php_path)) {
-        error_log('[WordPress] ERROR: Failed to copy pg4wp adapter to wp-content/db.php');
-        die('PostgreSQL adapter error: Failed to copy adapter file. Please check file permissions.');
-    }
-    error_log('[WordPress] SUCCESS: Successfully copied pg4wp adapter to wp-content/db.php');
-}
-
-// Load the adapter before any other database operations
-require_once($db_php_path);
-error_log('[WordPress] INFO: pg4wp adapter loaded successfully');
-
-// Parse database URL for Render
-$database_url = getenv('DATABASE_URL');
-if (!$database_url) {
-    error_log('[WordPress] ERROR: DATABASE_URL environment variable is not set');
-    die('Database configuration error: DATABASE_URL is not set. Please configure your environment variables.');
-}
-
-$url = parse_url($database_url);
-if (!$url || !isset($url['path']) || !isset($url['user']) || !isset($url['pass']) || !isset($url['host'])) {
-    error_log('[WordPress] ERROR: Invalid DATABASE_URL format');
-    die('Database configuration error: Invalid DATABASE_URL format. Please check your environment variables.');
-}
-
-// Database connection settings
-define('DB_NAME', 'wordpress_ygs8');
-define('DB_USER', 'wordpress_ygs8_user');
-define('DB_PASSWORD', 'dweBiZQA7O8ysGexzvBhOeSKiUfOZnlV');
-define('DB_HOST', 'dpg-cusvgi0gph6c73atsci0-a:3306');
+// MySQL Database Configuration
+define('DB_NAME', getenv('MYSQL_DATABASE'));
+define('DB_USER', getenv('MYSQL_USER'));
+define('DB_PASSWORD', getenv('MYSQL_PASSWORD'));
+define('DB_HOST', getenv('MYSQL_HOST') . ':' . getenv('DB_PORT'));
 define('DB_CHARSET', 'utf8');
 define('DB_COLLATE', '');
 
-// Test database connection
-try {
-    $dbh = new PDO(
-        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME,
-        DB_USER,
-        DB_PASSWORD,
-        array(
-            PDO::MYSQL_ATTR_SSL_CA => '/etc/ssl/certs/ca-certificates.crt',
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-        )
-    );
-    error_log('[WordPress] SUCCESS: Database connection established successfully');
-    error_log('[WordPress] INFO: Connected to MySQL database at ' . DB_HOST);
-    $dbh = null; // Close the test connection
-} catch (PDOException $e) {
-    error_log('[WordPress] ERROR: Database connection failed - ' . $e->getMessage());
-    error_log('[WordPress] DEBUG: Connection details - Host: ' . DB_HOST . ', Database: ' . DB_NAME . ', User: ' . DB_USER);
-    die('Database connection error: ' . $e->getMessage() . '. Please check your database credentials and ensure the database server is accessible.');
+// Check if database credentials are set
+if (!DB_NAME || !DB_USER || !DB_PASSWORD || !DB_HOST) {
+    error_log('[WordPress] ERROR: Required database environment variables are not set');
+    die('Database configuration error: Required environment variables are not set.');
 }
 
-// Authentication unique keys and salts
+error_log('[WordPress] Database configuration:');
+error_log('[WordPress] DB_HOST: ' . DB_HOST);
+error_log('[WordPress] DB_NAME: ' . DB_NAME);
+error_log('[WordPress] DB_USER: ' . DB_USER);
+
+// Authentication Unique Keys and Salts
 define('AUTH_KEY',         getenv('AUTH_KEY') ?: 'put your unique phrase here');
 define('SECURE_AUTH_KEY',  getenv('SECURE_AUTH_KEY') ?: 'put your unique phrase here');
 define('LOGGED_IN_KEY',    getenv('LOGGED_IN_KEY') ?: 'put your unique phrase here');
@@ -91,30 +38,25 @@ define('SECURE_AUTH_SALT', getenv('SECURE_AUTH_SALT') ?: 'put your unique phrase
 define('LOGGED_IN_SALT',   getenv('LOGGED_IN_SALT') ?: 'put your unique phrase here');
 define('NONCE_SALT',       getenv('NONCE_SALT') ?: 'put your unique phrase here');
 
-// WordPress database table prefix
+// WordPress Database Table prefix
 $table_prefix = 'wp_';
 
-// HTTPS settings
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-    $_SERVER['HTTPS'] = 'on';
+// WordPress debug settings
+define('WP_DEBUG', filter_var(getenv('WP_DEBUG'), FILTER_VALIDATE_BOOLEAN));
+define('WP_CACHE', filter_var(getenv('WP_CACHE'), FILTER_VALIDATE_BOOLEAN));
+
+// Auto update settings
+define('WP_AUTO_UPDATE_CORE', filter_var(getenv('WP_AUTO_UPDATE_CORE'), FILTER_VALIDATE_BOOLEAN));
+
+// Additional WordPress configuration
+if (getenv('WORDPRESS_CONFIG_EXTRA')) {
+    eval(getenv('WORDPRESS_CONFIG_EXTRA'));
 }
 
-// Debug settings
-define('WP_DEBUG', true);
-define('WP_DEBUG_LOG', true);
-define('WP_DEBUG_DISPLAY', true);
+// Absolute path to the WordPress directory
+if (!defined('ABSPATH')) {
+    define('ABSPATH', __DIR__ . '/');
+}
 
-// Disable automatic updates
-define('AUTOMATIC_UPDATER_DISABLED', true);
-
-// Disable file editing
-define('DISALLOW_FILE_EDIT', true);
-
-// Set WP_HOME and WP_SITEURL
-define('WP_HOME', 'https://espbot.onrender.com');
-define('WP_SITEURL', WP_HOME);
-
-require_once(ABSPATH . 'wp-content/db.php');
-
-// Include wp-settings.php
+// Sets up WordPress vars and included files
 require_once(ABSPATH . 'wp-settings.php');
