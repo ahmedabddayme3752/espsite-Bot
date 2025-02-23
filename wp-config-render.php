@@ -118,5 +118,7 @@ define('DISALLOW_FILE_EDIT', true);
 define('WP_HOME', 'https://espbot.onrender.com');
 define('WP_SITEURL', WP_HOME);
 
+require_once(ABSPATH . 'wp-content/db.php');
+
 // Include wp-settings.php
 require_once(ABSPATH . 'wp-settings.php');
