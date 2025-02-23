@@ -3,6 +3,8 @@ databases:
     plan: free
     type: mysql
     region: oregon
+    databaseName: wordpress
+    user: wpuser
 
 services:
   - type: web
@@ -16,10 +18,16 @@ services:
     envVars:
       - key: PORT
         value: "10000"
-      - key: DATABASE_URL
+      - key: MYSQL_DATABASE
+        value: wordpress
+      - key: MYSQL_USER
+        value: wpuser
+      - key: MYSQL_PASSWORD
+        generateValue: true
+      - key: MYSQL_HOST
         fromDatabase:
           name: wordpressdb
-          property: connectionString
+          property: host
       - key: DB_PORT
         value: "3306"
       - key: WORDPRESS_CONFIG_EXTRA

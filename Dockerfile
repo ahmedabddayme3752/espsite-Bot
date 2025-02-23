@@ -109,9 +109,12 @@ RewriteRule . /index.php [L]' > /var/www/html/.htaccess
 
 # Remove MySQL dependencies
 RUN apt-get update && \
-    apt-get remove --purge -y mysql-client mariadb-client* && \
+    apt-get remove --purge -y mariadb-client* && \
     apt-get autoremove -y && \
     apt-get clean
+
+# Install MySQL client
+RUN apt-get update && apt-get install -y mysql-client
 
 # Install PostgreSQL dependencies
 RUN apt-get update && apt-get install -y \
@@ -119,6 +122,10 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && docker-php-ext-install pdo pdo_pgsql \
     && update-ca-certificates
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD mysqladmin ping -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" || exit 1
 
 # Set the default command
 CMD ["/usr/local/bin/start.sh"]
