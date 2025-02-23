@@ -16,6 +16,11 @@ services:
         value: MySecurePass123!@#
       - key: WORDPRESS_DEBUG
         value: "1"
+      - key: WORDPRESS_HOME
+        fromService:
+          name: wordpress
+          type: web
+          property: url
     disk:
       name: wordpress-data
       mountPath: /var/www/html
@@ -43,4 +48,6 @@ services:
         value: MySecurePass123!@#
       - key: MYSQL_ROOT_PASSWORD
         generateValue: true
+      - key: MYSQL_TCP_PORT
+        value: "3306"
     ipAllowList: []
