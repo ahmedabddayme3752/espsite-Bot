@@ -76,23 +76,15 @@ RewriteCond %{REQUEST_FILENAME} !-f\n\
 RewriteCond %{REQUEST_FILENAME} !-d\n\
 RewriteRule . /index.php [L]' > /var/www/html/.htaccess
 
-# Create wait-for-mysql script
+# Create a startup script
 RUN echo '#!/bin/bash\n\
 echo "Waiting for MySQL..."\n\
-while ! nc -z $DB_HOST $DB_PORT; do\n\
+while ! nc -z mysql-db.internal 3306; do\n\
   sleep 1\n\
 done\n\
-echo "MySQL is up - starting Apache"\n\
-apache2-foreground' > /usr/local/bin/wait-for-mysql.sh && \
-    chmod +x /usr/local/bin/wait-for-mysql.sh
-
-# Create start script with port configuration
-RUN echo '#!/bin/bash\n\
-PORT="${PORT:-10000}"\n\
-echo "Listen ${PORT}" > /etc/apache2/ports.conf\n\
-sed -i "s/\${PORT}/$PORT/" /etc/apache2/sites-available/000-default.conf\n\
-/usr/local/bin/wait-for-mysql.sh' > /usr/local/bin/start.sh && \
-    chmod +x /usr/local/bin/start.sh
+echo "MySQL is up - starting WordPress"\n\
+apache2-foreground' > /usr/local/bin/start-wordpress.sh && \
+chmod +x /usr/local/bin/start-wordpress.sh
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html && \
@@ -107,5 +99,4 @@ HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
 WORKDIR /var/www/html
 
 # Set the default command
-ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["apache2-foreground"]
+CMD ["/usr/local/bin/start-wordpress.sh"]

@@ -6,10 +6,6 @@ services:
     plan: free
     region: oregon
     autoDeploy: true
-    disk:
-      name: wordpress-data
-      mountPath: /var/www/html
-      sizeGB: 10
     healthCheckPath: /
     numInstances: 1
     domains:
@@ -22,9 +18,13 @@ services:
       - key: WORDPRESS_DB_NAME
         value: wordpress
       - key: WORDPRESS_DB_PASSWORD
-        sync: false
+        value: MySecurePass123!@#
       - key: WP_DEBUG
         value: "true"
+    disk:
+      name: wordpress-data
+      mountPath: /var/www/html
+      sizeGB: 10
     dependsOn:
       - mysql-db
 
@@ -33,9 +33,9 @@ services:
     env: docker
     plan: free
     region: oregon
-    dockerCommand: --default-authentication-plugin=mysql_native_password
     image:
       url: mysql:8.0
+    dockerCommand: --default-authentication-plugin=mysql_native_password
     disk:
       name: mysql-data
       mountPath: /var/lib/mysql
@@ -46,7 +46,7 @@ services:
       - key: MYSQL_USER
         value: wordpress
       - key: MYSQL_PASSWORD
-        sync: false
+        value: MySecurePass123!@#
       - key: MYSQL_ROOT_PASSWORD
         generateValue: true
     ipAllowList: []
