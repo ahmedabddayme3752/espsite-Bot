@@ -9,7 +9,6 @@ dependencies:
 
 relationships:
     database: "db:mysql"
-    files: "files:files"
 
 variables:
     php:
