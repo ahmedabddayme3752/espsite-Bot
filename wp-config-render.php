@@ -1,4 +1,26 @@
 <?php
+// Load pg4wp adapter BEFORE any WordPress files
+$pg4wp_path = __DIR__ . '/wp-content/plugins/pg4wp/db.php';
+$db_php_path = __DIR__ . '/wp-content/db.php';
+
+if (!file_exists($pg4wp_path)) {
+    error_log('[WordPress] ERROR: pg4wp adapter not found at: ' . $pg4wp_path);
+    die('PostgreSQL adapter error: pg4wp adapter not found. Please check your installation.');
+}
+
+if (!file_exists($db_php_path)) {
+    error_log('[WordPress] WARNING: db.php not found in wp-content. Attempting to copy from pg4wp...');
+    if (!copy($pg4wp_path, $db_php_path)) {
+        error_log('[WordPress] ERROR: Failed to copy pg4wp adapter to wp-content/db.php');
+        die('PostgreSQL adapter error: Failed to copy adapter file. Please check file permissions.');
+    }
+    error_log('[WordPress] SUCCESS: Successfully copied pg4wp adapter to wp-content/db.php');
+}
+
+// Load the adapter before any other database operations
+require_once($db_php_path);
+error_log('[WordPress] INFO: pg4wp adapter loaded successfully');
+
 // Enable error reporting for debugging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -29,27 +51,6 @@ define('DB_HOST', $url['host']);
 define('DB_PORT', $url['port'] ?? 5432);
 define('DB_CHARSET', 'utf8');
 define('DB_COLLATE', '');
-
-// Load pg4wp adapter
-$pg4wp_path = __DIR__ . '/wp-content/plugins/pg4wp/db.php';
-$db_php_path = __DIR__ . '/wp-content/db.php';
-
-if (!file_exists($pg4wp_path)) {
-    error_log('[WordPress] ERROR: pg4wp adapter not found at: ' . $pg4wp_path);
-    die('PostgreSQL adapter error: pg4wp adapter not found. Please check your installation.');
-}
-
-if (!file_exists($db_php_path)) {
-    error_log('[WordPress] WARNING: db.php not found in wp-content. Attempting to copy from pg4wp...');
-    if (!copy($pg4wp_path, $db_php_path)) {
-        error_log('[WordPress] ERROR: Failed to copy pg4wp adapter to wp-content/db.php');
-        die('PostgreSQL adapter error: Failed to copy adapter file. Please check file permissions.');
-    }
-    error_log('[WordPress] SUCCESS: Successfully copied pg4wp adapter to wp-content/db.php');
-}
-
-require_once($db_php_path);
-error_log('[WordPress] INFO: pg4wp adapter loaded successfully');
 
 // Test database connection
 try {

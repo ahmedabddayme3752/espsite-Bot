@@ -78,7 +78,8 @@ RUN curl -O https://wordpress.org/latest.tar.gz && \
 RUN mkdir -p /var/www/html/wp-content/plugins/pg4wp && \
     curl -o /var/www/html/wp-content/plugins/pg4wp/db.php https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/db.php && \
     chmod 644 /var/www/html/wp-content/plugins/pg4wp/db.php && \
-    cp /var/www/html/wp-content/plugins/pg4wp/db.php /var/www/html/wp-content/db.php
+    cp /var/www/html/wp-content/plugins/pg4wp/db.php /var/www/html/wp-content/db.php && \
+    chown -R www-data:www-data /var/www/html/wp-content
 
 # Copy configuration files
 COPY wp-config-render.php /var/www/html/wp-config.php
