@@ -56,7 +56,7 @@ if (!$url || !isset($url['path']) || !isset($url['user']) || !isset($url['pass']
 define('DB_NAME', ltrim($url['path'], '/'));
 define('DB_USER', $url['user']);
 define('DB_PASSWORD', $url['pass']);
-define('DB_HOST', $url['host']);
+define('DB_HOST', $url['host'] . ':' . $url['port'] . '?sslmode=require');
 define('DB_PORT', $url['port'] ?? 5432);
 define('DB_CHARSET', 'utf8');
 define('DB_COLLATE', '');
@@ -64,7 +64,7 @@ define('DB_COLLATE', '');
 // Test database connection
 try {
     $dbh = new PDO(
-        "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME,
+        "pgsql:host=" . DB_HOST,
         DB_USER,
         DB_PASSWORD,
         array(
@@ -74,11 +74,11 @@ try {
         )
     );
     error_log('[WordPress] SUCCESS: Database connection established successfully');
-    error_log('[WordPress] INFO: Connected to PostgreSQL database at ' . DB_HOST . ':' . DB_PORT . '/' . DB_NAME);
+    error_log('[WordPress] INFO: Connected to PostgreSQL database at ' . DB_HOST);
     $dbh = null; // Close the test connection
 } catch (PDOException $e) {
     error_log('[WordPress] ERROR: Database connection failed - ' . $e->getMessage());
-    error_log('[WordPress] DEBUG: Connection details - Host: ' . DB_HOST . ', Port: ' . DB_PORT . ', Database: ' . DB_NAME . ', User: ' . DB_USER);
+    error_log('[WordPress] DEBUG: Connection details - Host: ' . DB_HOST . ', Database: ' . DB_NAME . ', User: ' . DB_USER);
     die('Database connection error: ' . $e->getMessage() . '. Please check your database credentials and ensure the database server is accessible.');
 }
 
