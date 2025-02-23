@@ -7,66 +7,69 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('log_errors', 1);
+ini_set('error_log', 'php://stderr');
 
 // Helper function to get environment variables with more robust checking
 function get_env_var($name, $default = null) {
-    // Try getenv first
     $value = getenv($name);
     if ($value !== false) {
+        error_log("[WordPress] Found in getenv: $name = " . $value);
         return $value;
     }
     
-    // Then try $_ENV
     if (isset($_ENV[$name])) {
+        error_log("[WordPress] Found in _ENV: $name = " . $_ENV[$name]);
         return $_ENV[$name];
     }
     
-    // Then try $_SERVER
     if (isset($_SERVER[$name])) {
+        error_log("[WordPress] Found in _SERVER: $name = " . $_SERVER[$name]);
         return $_SERVER[$name];
     }
     
-    // Finally return default
+    error_log("[WordPress] Using default for $name: " . $default);
     return $default;
-}
-
-// Log all environment variables for debugging
-error_log('[WordPress] Environment variables dump:');
-foreach ($_ENV as $key => $value) {
-    error_log("[WordPress] $_ENV[$key]: $value");
 }
 
 // Database settings
 $db_name = get_env_var('DB_NAME', 'wordpress');
 $db_user = get_env_var('DB_USER', 'wordpress');
 $db_password = get_env_var('DB_PASSWORD');
-$db_host = get_env_var('DB_HOST', 'mysql');
+$db_host = get_env_var('DB_HOST', 'mysql.internal');
 $db_port = get_env_var('DB_PORT', '3306');
 
-error_log('[WordPress] Database configuration:');
-error_log("[WordPress] DB_NAME: $db_name");
-error_log("[WordPress] DB_USER: $db_user");
-error_log("[WordPress] DB_HOST: $db_host:$db_port");
-error_log('[WordPress] DB_PASSWORD: ' . ($db_password ? 'set' : 'not set'));
+error_log('[WordPress] Attempting database connection with:');
+error_log("[WordPress] Host: $db_host:$db_port");
+error_log("[WordPress] Database: $db_name");
+error_log("[WordPress] User: $db_user");
+error_log("[WordPress] Password length: " . ($db_password ? strlen($db_password) : 0));
 
-// Check required database settings
-if (!$db_password) {
-    error_log('[WordPress] ERROR: Required database password is not set');
-    die('Database configuration error: Required password is not set.');
+// Test database connection
+try {
+    $mysqli = new mysqli($db_host, $db_user, $db_password, $db_name, $db_port);
+    
+    if ($mysqli->connect_error) {
+        error_log('[WordPress] MySQL Connection Error: ' . $mysqli->connect_error);
+        error_log('[WordPress] MySQL Error Number: ' . $mysqli->connect_errno);
+        throw new Exception('Database connection error: ' . $mysqli->connect_error);
+    }
+    
+    error_log('[WordPress] Successfully connected to MySQL');
+    $mysqli->close();
+    
+} catch (Exception $e) {
+    error_log('[WordPress] Exception: ' . $e->getMessage());
+    error_log('[WordPress] Stack trace: ' . $e->getTraceAsString());
+    die('Database connection error: ' . $e->getMessage());
 }
 
 /** MySQL settings */
 define('DB_NAME', $db_name);
 define('DB_USER', $db_user);
 define('DB_PASSWORD', $db_password);
-define('DB_HOST', "$db_host:$db_port");
+define('DB_HOST', $db_host);
 define('DB_CHARSET', 'utf8');
 define('DB_COLLATE', '');
-
-// Set up HTTPS if behind proxy
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-    $_SERVER['HTTPS'] = 'on';
-}
 
 /**
  * Authentication Unique Keys and Salts.
@@ -83,11 +86,8 @@ define('NONCE_SALT',       'W3#mK7!nX9$vP4@tL5*wY2^qB');
 // WordPress Database Table prefix
 $table_prefix = 'wp_';
 
-// WordPress Localized Language
-define('WPLANG', '');
-
 // Debug settings
-define('WP_DEBUG', filter_var(get_env_var('WP_DEBUG', 'false'), FILTER_VALIDATE_BOOLEAN));
+define('WP_DEBUG', true);
 define('WP_DEBUG_LOG', true);
 define('WP_DEBUG_DISPLAY', true);
 
