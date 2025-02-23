@@ -1,30 +1,5 @@
 services:
-  - type: web
-    name: wordpress
-    env: docker
-    dockerfilePath: ./Dockerfile
-    plan: free
-    healthCheckPath: /wp-admin/install.php
-    envVars:
-      - key: WORDPRESS_DB_HOST
-        value: mysql-db.internal
-      - key: WORDPRESS_DB_USER
-        value: wordpress
-      - key: WORDPRESS_DB_NAME
-        value: wordpress
-      - key: WORDPRESS_DB_PASSWORD
-        value: MySecurePass123!@#
-      - key: WORDPRESS_DEBUG
-        value: "1"
-    disk:
-      name: wordpress-data
-      mountPath: /var/www/html
-      sizeGB: 10
-    domains:
-      - espbot.onrender.com
-    dependsOn:
-      - mysql-db
-
+  # MySQL Service
   - type: pserv
     name: mysql-db
     env: docker
@@ -44,4 +19,33 @@ services:
         value: MySecurePass123!@#
       - key: MYSQL_ROOT_PASSWORD
         generateValue: true
-    ipAllowList: []
+    ports:
+      - port: 3306
+        expose: true
+
+  # WordPress Service
+  - type: web
+    name: wordpress
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: WORDPRESS_DB_HOST
+        value: mysql-db:3306
+      - key: WORDPRESS_DB_USER
+        value: wordpress
+      - key: WORDPRESS_DB_NAME
+        value: wordpress
+      - key: WORDPRESS_DB_PASSWORD
+        value: MySecurePass123!@#
+      - key: WORDPRESS_DEBUG
+        value: "1"
+    disk:
+      name: wordpress-data
+      mountPath: /var/www/html
+      sizeGB: 10
+    domains:
+      - espbot.onrender.com
+    dependsOn:
+      - mysql-db
