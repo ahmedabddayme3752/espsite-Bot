@@ -1,52 +1,20 @@
 <?php
+// Load pg4wp adapter
+if (!defined('DB_DRIVER')) {
+    define('DB_DRIVER', 'pgsql');
+}
+
+// Override WordPress database class to use PostgreSQL
+define('DB_CLASS', 'PostgreSQL');
+define('DB_CHARSET', 'utf8');
+define('DB_COLLATE', '');
+
+// Load pg4wp
+require_once(__DIR__ . '/wp-content/plugins/pg4wp/db.php');
+
 // Enable error reporting for debugging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-
-// Force PostgreSQL adapter
-define('DB_DRIVER', 'pgsql');
-define('DB_TYPE', 'pgsql');
-
-// Set up pg4wp before anything else
-define('PG4WP_ROOT', __DIR__ . '/wp-content/plugins/pg4wp');
-define('PG4WP_INSTALLING', true);
-
-// Create and load the pg4wp adapter
-if (!file_exists(PG4WP_ROOT . '/db.php')) {
-    error_log('pg4wp not found, downloading...');
-    
-    if (!file_exists(PG4WP_ROOT)) {
-        if (!mkdir(PG4WP_ROOT, 0755, true)) {
-            error_log('Failed to create pg4wp directory');
-            die('Failed to create PostgreSQL adapter directory');
-        }
-    }
-    
-    $pg4wp_url = 'https://raw.githubusercontent.com/PostgreSQL-For-Wordpress/postgresql-for-wordpress/master/pg4wp/db.php';
-    $pg4wp_content = file_get_contents($pg4wp_url);
-    
-    if ($pg4wp_content === false) {
-        error_log('Failed to download pg4wp');
-        die('Failed to download PostgreSQL adapter');
-    }
-    
-    if (!file_put_contents(PG4WP_ROOT . '/db.php', $pg4wp_content)) {
-        error_log('Failed to write pg4wp file');
-        die('Failed to save PostgreSQL adapter');
-    }
-    
-    error_log('Successfully installed pg4wp');
-}
-
-// Load pg4wp before any database operations
-if (file_exists(PG4WP_ROOT . '/db.php')) {
-    error_log('Loading pg4wp adapter...');
-    require_once(PG4WP_ROOT . '/db.php');
-    error_log('pg4wp adapter loaded successfully');
-} else {
-    error_log('pg4wp adapter not found');
-    die('PostgreSQL adapter not found');
-}
 
 // Parse database URL for Render
 $database_url = getenv('DATABASE_URL');
@@ -67,8 +35,6 @@ define('DB_USER', $url['user']);
 define('DB_PASSWORD', $url['pass']);
 define('DB_HOST', $url['host'] . '.oregon-postgres.render.com');
 define('DB_PORT', $url['port'] ?? 5432);
-define('DB_CHARSET', 'utf8');
-define('DB_COLLATE', '');
 
 // PostgreSQL specific settings
 define('DB_SSL', true);
