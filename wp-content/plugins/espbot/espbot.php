@@ -19,6 +19,14 @@ if (!defined('ABSPATH')) {
 define('ESPBOT_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('ESPBOT_PLUGIN_URL', plugin_dir_url(__FILE__));
 
+// API Configuration - These should be defined in wp-config.php
+if (!defined('ESPBOT_API_KEY')) {
+    define('ESPBOT_API_KEY', 'app-IpWkVHUIINQVrU4fOBmJuE0b'); // Set your API key in wp-config.php
+}
+if (!defined('ESPBOT_API_URL')) {
+    define('ESPBOT_API_URL', 'http://45.147.251.181/v1/chat-messages');
+}
+
 // Include required files
 require_once ESPBOT_PLUGIN_PATH . 'chat-interface.php';
 
@@ -51,8 +59,8 @@ function espbot_enqueue_scripts() {
     // Add AJAX URL and nonce to our script
     wp_localize_script('espbot-chat-js', 'espbotAjax', array(
         'ajaxurl' => admin_url('admin-ajax.php'),
-        'nonce' => wp_create_nonce('espbot_chat_nonce'),
-        'fastapi_url' => defined('FASTAPI_URL') ? FASTAPI_URL : 'https://main-bvxea6i-jvnjg77fkbzzi.eu-5.platformsh.site'
+        'nonce' => wp_create_nonce('espbot_send_message'),
+        'api_url' => defined('ESPBOT_API_URL') ? ESPBOT_API_URL : 'http://45.147.251.181/v1/chat-messages'
     ));
 }
 add_action('wp_enqueue_scripts', 'espbot_enqueue_scripts');
@@ -82,17 +90,104 @@ add_action('init', 'espbot_add_font_cors_headers');
 
 // Handle AJAX message sending
 function espbot_handle_message() {
-    check_ajax_referer('espbot_nonce', 'nonce');
-    
-    $message = sanitize_text_field($_POST['message']);
-    
-    // Get relevant documents based on the query
-    $relevant_docs = espbot_search_documents($message);
-    
-    // Generate response using the context
-    $response_data = espbot_generate_response($message, $relevant_docs);
-    
-    wp_send_json_success($response_data);
+    try {
+        error_log('ESPBot: Starting message handler');
+        
+        if (!isset($_POST['nonce'])) {
+            error_log('ESPBot Error: No nonce provided');
+            throw new Exception('Security check failed - no nonce provided');
+        }
+        
+        check_ajax_referer('espbot_send_message', 'nonce');
+        error_log('ESPBot: Nonce verification passed');
+        
+        if (!isset($_POST['message'])) {
+            error_log('ESPBot Error: No message provided');
+            throw new Exception('No message provided');
+        }
+        
+        $message = sanitize_text_field($_POST['message']);
+        $conversation_id = isset($_POST['conversation_id']) ? sanitize_text_field($_POST['conversation_id']) : '';
+        $user_id = get_current_user_id() ?: 'guest-' . substr(md5($_SERVER['REMOTE_ADDR']), 0, 8);
+        
+        error_log('ESPBot: Processing message from user: ' . $user_id);
+        
+        $api_key = defined('ESPBOT_API_KEY') ? ESPBOT_API_KEY : '';
+        if (empty($api_key)) {
+            error_log('ESPBot Error: API key not configured');
+            throw new Exception('API key not configured');
+        }
+
+        $request_data = [
+            'query' => $message,
+            'response_mode' => 'blocking',
+            'conversation_id' => $conversation_id,
+            'user' => $user_id,
+            'inputs' => [],
+            'files' => []
+        ];
+
+        $args = [
+            'body' => json_encode($request_data),
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $api_key
+            ],
+            'timeout' => 120
+        ];
+
+        $api_url = defined('ESPBOT_API_URL') ? ESPBOT_API_URL : 'http://45.147.251.181/v1/chat-messages';
+        error_log('ESPBot: Sending request to API: ' . $api_url);
+        error_log('ESPBot: Request data: ' . json_encode($request_data));
+        
+        $response = wp_remote_post($api_url, $args);
+
+        if (is_wp_error($response)) {
+            $error_message = $response->get_error_message();
+            error_log('ESPBot Error: WordPress HTTP Error: ' . $error_message);
+            throw new Exception('WordPress HTTP Error: ' . $error_message);
+        }
+
+        $response_code = wp_remote_retrieve_response_code($response);
+        error_log('ESPBot: API response code: ' . $response_code);
+        
+        if ($response_code !== 200) {
+            $error_message = 'API Error: Received response code ' . $response_code;
+            error_log('ESPBot Error: ' . $error_message);
+            error_log('ESPBot Error Response: ' . wp_remote_retrieve_body($response));
+            throw new Exception($error_message);
+        }
+
+        $body = wp_remote_retrieve_body($response);
+        error_log('ESPBot: API Response body: ' . $body);
+        
+        $data = json_decode($body, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $error_message = 'Invalid JSON response: ' . json_last_error_msg();
+            error_log('ESPBot Error: ' . $error_message);
+            throw new Exception($error_message);
+        }
+
+        if (!isset($data['answer'])) {
+            $error_message = 'Invalid response format: Missing answer field';
+            error_log('ESPBot Error: ' . $error_message);
+            error_log('ESPBot Response data: ' . json_encode($data));
+            throw new Exception($error_message);
+        }
+
+        error_log('ESPBot: Successfully processed message');
+        wp_send_json_success([
+            'message' => $data['answer'],
+            'conversation_id' => $data['conversation_id'] ?? '',
+            'metadata' => $data['metadata'] ?? null
+        ]);
+
+    } catch (Exception $e) {
+        error_log('ESPBot Error: ' . $e->getMessage());
+        wp_send_json_error([
+            'message' => 'Error: ' . $e->getMessage()
+        ]);
+    }
 }
 add_action('wp_ajax_espbot_send_message', 'espbot_handle_message');
 add_action('wp_ajax_nopriv_espbot_send_message', 'espbot_handle_message');

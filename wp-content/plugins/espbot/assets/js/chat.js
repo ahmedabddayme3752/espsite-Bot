@@ -216,7 +216,8 @@ jQuery(document).ready(function($) {
         scrollToBottom();
     }
 
-    let currentSessionId = null;
+    let currentSessionId = '';
+    let conversationId = '';
 
     // Function to send message
     async function sendMessage() {
@@ -243,28 +244,31 @@ jQuery(document).ready(function($) {
             const response = await $.ajax({
                 url: espbotAjax.ajaxurl,
                 type: 'POST',
+                dataType: 'json',
                 data: {
-                    action: 'espbot_chat',
+                    action: 'espbot_send_message',
                     nonce: espbotAjax.nonce,
                     message: userMessage,
-                    session_id: currentSessionId
+                    conversation_id: conversationId
                 }
             });
 
             hideTypingIndicator();
 
-            if (!response.success) {
-                throw new Error(response.data?.error || 'Unknown error');
+            if (!response || !response.success) {
+                const errorMsg = response?.data?.message || 'Unknown error occurred';
+                console.error('Server error:', errorMsg);
+                throw new Error(errorMsg);
             }
 
             const data = response.data;
-            if (!data || !data.message) {
-                throw new Error('Invalid response format');
+            if (!data || typeof data.message === 'undefined') {
+                throw new Error('Invalid response format from server');
             }
 
-            // Update session ID if provided
-            if (data.session_id) {
-                currentSessionId = data.session_id;
+            // Update conversation ID if provided
+            if (data.conversation_id) {
+                conversationId = data.conversation_id;
             }
 
             return data.message;
@@ -272,13 +276,17 @@ jQuery(document).ready(function($) {
         } catch (error) {
             hideTypingIndicator();
             console.error('Network error:', error);
-            throw error;
+            if (error.status === 403) {
+                throw new Error('Authentication error. Please refresh the page and try again.');
+            }
+            throw new Error(error.message || 'Error communicating with the server');
         }
     }
 
     // Function to start new chat
     function startNewChat() {
-        currentSessionId = null;
+        currentSessionId = '';
+        conversationId = '';
         chatMessages.empty();
         addBotMessage("Bonjour ! Je suis ESPbot, l'assistant virtuel officiel de l'École Supérieure Polytechnique (ESP). Je suis là pour vous aider avec vos questions et vous fournir des informations précises et pertinentes sur l'ESP. Comment puis-je vous aider aujourd'hui ?");
     }
