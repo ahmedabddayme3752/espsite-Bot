@@ -1,16 +1,26 @@
-databases:
-  - name: wordpressdb
+services:
+  # First, define the MySQL service
+  - type: pserv
+    name: wordpressdb
+    env: docker
     plan: free
-    type: mysql
     region: oregon
-    databaseName: wordpress
-    user: wpuser
     disk:
       name: mysql-data
       mountPath: /var/lib/mysql
       sizeGB: 10
-
-services:
+    envVars:
+      - key: MYSQL_DATABASE
+        value: wordpress
+      - key: MYSQL_USER
+        value: wpuser
+      - key: MYSQL_PASSWORD
+        generateValue: true
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true
+    dockerCommand: mysqld --default-authentication-plugin=mysql_native_password
+    
+  # Then, define the WordPress service
   - type: web
     name: wordpress
     env: docker
@@ -23,19 +33,21 @@ services:
       - key: PORT
         value: "10000"
       - key: MYSQL_DATABASE
-        fromDatabase:
-          name: wordpressdb
-          property: database
+        sync: false
+        value: wordpress
       - key: MYSQL_USER
-        fromDatabase:
-          name: wordpressdb
-          property: user
+        sync: false
+        value: wpuser
       - key: MYSQL_PASSWORD
-        fromDatabase:
+        sync: false
+        fromService:
+          type: pserv
           name: wordpressdb
-          property: password
+          envVarKey: MYSQL_PASSWORD
       - key: MYSQL_HOST
-        fromDatabase:
+        sync: false
+        fromService:
+          type: pserv
           name: wordpressdb
           property: host
       - key: DB_PORT
@@ -50,7 +62,7 @@ services:
             define('FORCE_SSL_LOGIN', true);
           }
       - key: WP_DEBUG
-        value: "false"
+        value: "true"
       - key: WP_CACHE
         value: "true"
       - key: WP_AUTO_UPDATE_CORE
