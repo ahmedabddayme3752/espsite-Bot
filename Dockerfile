@@ -4,7 +4,6 @@ FROM php:8.2-apache
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     ca-certificates \
-    libpq-dev \
     libpng-dev \
     libjpeg-dev \
     libwebp-dev \
@@ -20,9 +19,20 @@ RUN apt-get update && apt-get install -y \
 # Install PostgreSQL client
 RUN apt-get update && apt-get install -y postgresql-client
 
+# Install MySQL client and required PHP extensions
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    default-mysql-client \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install PHP extensions
-RUN docker-php-ext-configure gd --with-jpeg && \
-    docker-php-ext-install -j$(nproc) pdo_pgsql pgsql opcache mysqli pdo_mysql
+RUN docker-php-ext-install -j "$(nproc)" \
+    pdo_mysql \
+    mysqli \
+    opcache \
+    pdo_pgsql \
+    pgsql
 
 # Configure PHP for WordPress
 RUN { \
@@ -113,21 +123,9 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     apt-get clean
 
-# Install MySQL client
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends mysql-client && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install PostgreSQL dependencies
-RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    ca-certificates \
-    && docker-php-ext-install pdo pdo_pgsql \
-    && update-ca-certificates
-
-# Healthcheck
+# Healthcheck to verify database connection
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD mysqladmin ping -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" || exit 1
+    CMD mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -e "SELECT 1;" || exit 1
 
 # Set the default command
 CMD ["/usr/local/bin/start.sh"]
