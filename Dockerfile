@@ -19,12 +19,16 @@ RUN apt-get update && apt-get install -y \
 # Install PostgreSQL client
 RUN apt-get update && apt-get install -y postgresql-client
 
-# Install MySQL client and required PHP extensions
+# Remove any existing MySQL/MariaDB client packages
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    default-mysql-client \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+    apt-get remove --purge -y mysql-client* mariadb-client* && \
+    apt-get autoremove -y && \
+    apt-get clean
+
+# Install MySQL client
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends default-mysql-client && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
 RUN docker-php-ext-install -j "$(nproc)" \
@@ -116,12 +120,6 @@ RewriteRule ^index\.php$ - [L]\n\
 RewriteCond %{REQUEST_FILENAME} !-f\n\
 RewriteCond %{REQUEST_FILENAME} !-d\n\
 RewriteRule . /index.php [L]' > /var/www/html/.htaccess
-
-# Remove MySQL dependencies
-RUN apt-get update && \
-    apt-get remove --purge -y mariadb-client* && \
-    apt-get autoremove -y && \
-    apt-get clean
 
 # Healthcheck to verify database connection
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \

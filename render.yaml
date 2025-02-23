@@ -5,6 +5,10 @@ databases:
     region: oregon
     databaseName: wordpress
     user: wpuser
+    disk:
+      name: mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 10
 
 services:
   - type: web
