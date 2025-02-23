@@ -1,0 +1,58 @@
+name: app
+
+type: php:8.1
+build:
+    flavor: composer
+
+relationships:
+    database: "db:mysql"
+    files: "files:files"
+
+runtime:
+    extensions:
+        - mysql
+        - gd
+        - curl
+        - json
+        - openssl
+        - mbstring
+        - zip
+        - xml
+        - imagick
+
+variables:
+    php:
+        upload_max_filesize: 64M
+        post_max_size: 64M
+        memory_limit: 256M
+
+web:
+    locations:
+        "/":
+            root: "/"
+            index:
+                - index.php
+            expires: -1
+            scripts: true
+            allow: false
+            rules:
+                \.(css|js|gif|jpe?g|png|ttf|eot|woff2?|otf|html|ico|svg?)$:
+                    allow: true
+                ^/robots\.txt$:
+                    allow: true
+                ^/sitemap\.xml$:
+                    allow: true
+
+mounts:
+    "/wp-content/uploads": "shared:files/uploads"
+    "/wp-content/cache": "shared:files/cache"
+
+disk: 2048
+
+hooks:
+    build: |
+        set -e
+        curl -o wordpress.tar.gz -fL "https://wordpress.org/latest.tar.gz"
+        tar -xzf wordpress.tar.gz --strip-components=1
+        rm wordpress.tar.gz
+        cp wp-config-render.php wp-config.php
