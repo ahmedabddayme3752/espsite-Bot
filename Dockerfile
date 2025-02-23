@@ -1,4 +1,3 @@
-# Use official WordPress Apache image
 FROM wordpress:6.4-apache
 
 # Install required packages
@@ -8,95 +7,12 @@ RUN apt-get update && \
     netcat-openbsd && \
     rm -rf /var/lib/apt/lists/*
 
-# Add custom entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-# Add configuration script
-COPY wp-config-render.php /usr/src/wordpress/
-RUN chown www-data:www-data /usr/src/wordpress/wp-config-render.php
-
-# Set environment variables
-ENV WORDPRESS_DB_HOST=mysql-db.internal:3306
-ENV WORDPRESS_DB_NAME=wordpress
-ENV WORDPRESS_DB_USER=wordpress
-
-# Configure GD extension
-RUN docker-php-ext-configure gd --with-jpeg --with-webp
-
-# Install PHP extensions
-RUN docker-php-ext-install -j "$(nproc)" \
-    gd \
-    zip \
-    pdo_mysql \
-    mysqli \
-    opcache
-
-# Configure PHP for WordPress
-RUN { \
-    echo 'display_errors = On'; \
-    echo 'error_reporting = E_ALL'; \
-    echo 'log_errors = On'; \
-    echo 'error_log = /dev/stderr'; \
-    echo 'memory_limit = 256M'; \
-    echo 'max_execution_time = 120'; \
-    echo 'upload_max_filesize = 64M'; \
-    echo 'post_max_size = 64M'; \
-    } > /usr/local/etc/php/conf.d/wordpress.ini
-
-# Configure Apache
-RUN a2enmod rewrite headers ssl
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
-RUN { \
-    echo '<VirtualHost *:${PORT}>'; \
-    echo '    DocumentRoot /var/www/html'; \
-    echo '    ErrorLog ${APACHE_LOG_DIR}/error.log'; \
-    echo '    CustomLog ${APACHE_LOG_DIR}/access.log combined'; \
-    echo '    <Directory /var/www/html/>'; \
-    echo '        Options FollowSymLinks'; \
-    echo '        AllowOverride All'; \
-    echo '        Require all granted'; \
-    echo '    </Directory>'; \
-    echo '</VirtualHost>'; \
-    } > /etc/apache2/sites-available/000-default.conf
-
-# Download and extract WordPress
-RUN curl -o wordpress.tar.gz -fL https://wordpress.org/latest.tar.gz \
-    && tar -xzf wordpress.tar.gz --strip-components=1 -C /var/www/html \
-    && rm wordpress.tar.gz
-
-# Create wp-content/uploads directory and set permissions
-RUN mkdir -p /var/www/html/wp-content/uploads
-
-# Create .htaccess file
-RUN echo 'RewriteEngine On\n\
-RewriteBase /\n\
-RewriteRule ^index\.php$ - [L]\n\
-RewriteCond %{REQUEST_FILENAME} !-f\n\
-RewriteCond %{REQUEST_FILENAME} !-d\n\
-RewriteRule . /index.php [L]' > /var/www/html/.htaccess
-
-# Create a startup script
-RUN echo '#!/bin/bash\n\
-echo "Waiting for MySQL..."\n\
-while ! nc -z mysql-db.internal 3306; do\n\
-  sleep 1\n\
-done\n\
-echo "MySQL is up - starting WordPress"\n\
-apache2-foreground' > /usr/local/bin/start-wordpress.sh && \
-chmod +x /usr/local/bin/start-wordpress.sh
+# Copy WordPress config
+COPY wp-config-render.php /var/www/html/wp-config.php
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html && \
     find /var/www/html -type d -exec chmod 755 {} \; && \
     find /var/www/html -type f -exec chmod 644 {} \;
 
-# Healthcheck to verify database connection
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-    CMD mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -e "SELECT 1;" || exit 1
-
-# Set working directory
 WORKDIR /var/www/html
-
-# Set the default command
-CMD ["/usr/local/bin/start-wordpress.sh"]

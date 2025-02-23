@@ -12,15 +12,15 @@ services:
       - espbot.onrender.com
     envVars:
       - key: WORDPRESS_DB_HOST
-        value: mysql-db.internal:3306
+        value: mysql-db.internal
       - key: WORDPRESS_DB_USER
         value: wordpress
       - key: WORDPRESS_DB_NAME
         value: wordpress
       - key: WORDPRESS_DB_PASSWORD
         value: MySecurePass123!@#
-      - key: WP_DEBUG
-        value: "true"
+      - key: WORDPRESS_DEBUG
+        value: "1"
     disk:
       name: wordpress-data
       mountPath: /var/www/html
