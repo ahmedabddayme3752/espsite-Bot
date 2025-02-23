@@ -1,7 +1,7 @@
 databases:
-  - name: wordpress-db
+  - name: wordpressdb
     plan: free
-    type: postgres
+    type: postgresql
     region: oregon
 
 services:
@@ -18,7 +18,7 @@ services:
         value: "10000"
       - key: DATABASE_URL
         fromDatabase:
-          name: wordpress-db
+          name: wordpressdb
           property: connectionString
       - key: WORDPRESS_CONFIG_EXTRA
         value: |
@@ -33,6 +33,8 @@ services:
         value: "false"
       - key: WP_CACHE
         value: "true"
+      - key: WP_AUTO_UPDATE_CORE
+        value: "false"
     disk:
       name: wordpress-data
       mountPath: /var/www/html

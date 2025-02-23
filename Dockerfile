@@ -17,16 +17,12 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
+# Install PostgreSQL client
+RUN apt-get update && apt-get install -y postgresql-client
+
 # Install PHP extensions
-RUN docker-php-ext-configure pdo_mysql --disable-mysqlnd && \
-    docker-php-ext-configure gd --with-jpeg --with-webp && \
-    docker-php-ext-install -j$(nproc) \
-    pdo \
-    pdo_pgsql \
-    pgsql \
-    gd \
-    zip \
-    opcache
+RUN docker-php-ext-configure gd --with-jpeg && \
+    docker-php-ext-install -j$(nproc) pdo_pgsql pgsql opcache
 
 # Configure PHP for WordPress
 RUN { \
