@@ -15,9 +15,9 @@ services:
       - key: DB_USER
         value: wordpress
       - key: DB_PASSWORD
-        value: wp_db_pass_8x4K9m2P#vL$
+        sync: false
       - key: DB_HOST
-        value: mysql
+        value: mysql.internal
       - key: DB_PORT
         value: "3306"
       - key: WP_DEBUG
@@ -48,6 +48,7 @@ services:
       - key: MYSQL_USER
         value: wordpress
       - key: MYSQL_PASSWORD
-        value: wp_db_pass_8x4K9m2P#vL$
+        sync: false
       - key: MYSQL_ROOT_PASSWORD
-        value: root_pass_N7q#mK9$pL2@
+        generateValue: true
+    ipAllowList: []
