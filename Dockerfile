@@ -41,23 +41,22 @@ RUN a2enmod rewrite headers && \
     a2dismod -f autoindex
 
 # Configure Apache
-RUN sed -i 's/Listen 80/Listen ${PORT:-80}/g' /etc/apache2/ports.conf && \
-    sed -i 's/:80/:${PORT:-80}/g' /etc/apache2/sites-available/000-default.conf && \
-    sed -i 's/ServerName www.example.com/ServerName localhost/g' /etc/apache2/sites-available/000-default.conf
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf && \
+    sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf && \
+    sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf && \
+    sed -i "s/VirtualHost *:80/VirtualHost *:${PORT}/g" /etc/apache2/sites-available/000-default.conf
 
 # Set environment variables
 ENV PORT=80
 ENV APACHE_PORT=80
 
-# Configure Apache virtual host
-RUN sed -i 's/VirtualHost \*:80/VirtualHost *:${PORT}/g' /etc/apache2/sites-available/000-default.conf
+# Configure WordPress database adapter
+RUN mkdir -p /var/www/html/wp-content/plugins/pg4wp && \
+    ln -sf /var/www/html/wp-content/plugins/pg4wp/db.php /var/www/html/wp-content/db.php && \
+    chown -R www-data:www-data /var/www/html
 
 # Expose the port
 EXPOSE ${PORT}
-
-# Configure Apache to listen on PORT environment variable
-RUN echo "Listen ${PORT}" > /etc/apache2/ports.conf && \
-    sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/sites-available/000-default.conf
 
 # Set working directory
 WORKDIR /var/www/html

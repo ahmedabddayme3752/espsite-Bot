@@ -11,11 +11,11 @@ services:
     plan: free
     region: oregon
     buildCommand: docker build -t wordpress-app .
-    startCommand: /usr/local/bin/start.sh
+    startCommand: apache2-foreground
     autoDeploy: true
     envVars:
       - key: PORT
-        value: "10000"
+        sync: false
       - key: DATABASE_URL
         fromDatabase:
           name: wordpress-db
