@@ -185,7 +185,7 @@ espbot/
 
 <div align="center">
 
-### Développé avec ❤️ par Ahmed Abd Dayme (AhmedBouha)
+### Développé par Ahmed Abd Dayme (AhmedBouha)
 
 [![GitHub followers](https://img.shields.io/github/followers/ahmedabddayme3752?style=social)](https://github.com/ahmedabddayme3752)
 
@@ -211,6 +211,14 @@ Tous droits réservés
 <td>🌐 GitHub</td>
 <td><a href="https://github.com/ahmedabddayme3752">ahmedabddayme3752</a></td>
 </tr>
+ <tr>
+<td>👨‍💻 Développeur</td>
+<td> medlemine-djeidjah</td>
+</tr>
+<tr>
+<td>🌐 GitHub</td>
+<td><a href="https://github.com/medlemine-djeidjah">ahmedabddayme3752</a></td>
+</tr>
 <tr>
 <td>🏫 Institution</td>
 <td><a href="https://esp.sn">ESP Maurtania</a></td>
@@ -229,33 +237,13 @@ Tous droits réservés
 </details>
 
 ---
-
 <div align="center">
 
-### Made with ❤️ for ESP Maurtania
+### Made with  for ESP Maurtania
 
 [⬆️ Retour en haut](#-espbot---assistant-virtuel-pour-lesp)
 
-</div># 🤖 ESPBot - Assistant Virtuel pour l'ESP
-
-<div align="center">
-
-![ESP Logo](wp-content/plugins/espbot/assets/images/esplogo.png))
-
-[![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
-[![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
-[![JavaScript](https://img.shields.io/badge/JavaScript-ES6%2B-yellow.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![Markdown](https://img.shields.io/badge/Markdown-Support-green.svg)](https://www.markdownguide.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688.svg)](https://fastapi.tiangolo.com/)
-[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Active-success.svg)]()
-[![Author](https://img.shields.io/badge/Author-Ahmed%20Abd%20Dayme-orange.svg)](https://github.com/ahmedabddayme3752)
-
-*Un chatbot intelligent pour l'École Supérieure Polytechnique (ESP)*
-
-[🌐 Demo](https://esp.sn) | [📚 Documentation](#documentation) | [🚀 Installation](#installation) | [💬 Contact](#-contact)
-
-</div>
+</div># 🤖 ESPBot - Assistant Virtuel pour l
 
 ---
 
@@ -419,15 +407,6 @@ espbot/
 </tr>
 </table>
 
-## 👨‍💻 Développement
-
-<div align="center">
-
-### Développé avec ❤️ par Ahmed Abd Dayme (AhmedBouha)
-
-[![GitHub followers](https://img.shields.io/github/followers/ahmedabddayme3752?style=social)](https://github.com/ahmedabddayme3752)
-
-</div>
 
 ## 📄 Licence
 
