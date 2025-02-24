@@ -389,14 +389,15 @@
 
 .espbot-chat-window {
     display: none;
-    position: absolute;
-    bottom: 80px;
-    right: 0;
-    width: 380px;
-    height: 550px;
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 5px 40px rgba(0, 0, 0, 0.16);
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 350px;
+    height: 500px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+    z-index: 999998;
     overflow: hidden;
     transition: all 0.3s ease;
 }
@@ -440,8 +441,8 @@
 .espbot-header-text h3 {
     margin: 0;
     font-size: 18px;
+    color: white;
     font-weight: 600;
-    letter-spacing: 0.5px;
 }
 
 .espbot-status {
@@ -569,28 +570,8 @@
 }
 
 /* Show chat window when active */
-.espbot-widget.active .espbot-chat-window {
+#espbot-widget.active .espbot-chat-window {
     display: block;
-    animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.espbot-widget.active .espbot-open-icon {
-    display: none;
-}
-
-.espbot-widget.active .espbot-close-icon {
-    display: inline;
 }
 
 /* Custom scrollbar */
@@ -626,6 +607,21 @@
 .espbot-try-ask i {
     font-size: 14px;
     color: #006838;  /* Same green as the buttons */
+}
+
+.espbot-suggestions-container {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .espbot-suggestions {
@@ -909,4 +905,29 @@
         opacity: 1;
         transform: scale(1) translateY(0);
     }
+}
+
+.espbot-status {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #2ecc71;
+    border-radius: 50%;
+    margin-right: 6px;
+    display: inline-block;
+}
+
+/* Offline status */
+.espbot-status.offline {
+    color: #ff4444;
+}
+
+.espbot-status.offline .status-dot {
+    background-color: #ff4444;
 }

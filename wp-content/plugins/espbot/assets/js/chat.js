@@ -2,6 +2,7 @@ jQuery(document).ready(function($) {
     // Initialize variables
     const widget = $('#espbot-widget');
     const toggleBtn = $('#espbot-toggle');
+    const chatWindow = $('.espbot-chat-window');
     const chatMessages = $('#espbot-chat-messages');
     const userInput = $('#espbot-chat-input');
     const sendButton = $('#espbot-chat-send');
@@ -10,6 +11,7 @@ jQuery(document).ready(function($) {
     console.log('Chat elements initialized:', {
         widget: widget.length,
         toggleBtn: toggleBtn.length,
+        chatWindow: chatWindow.length,
         chatMessages: chatMessages.length,
         userInput: userInput.length,
         sendButton: sendButton.length,
@@ -19,6 +21,12 @@ jQuery(document).ready(function($) {
     // Toggle chat window
     toggleBtn.on('click', function() {
         widget.toggleClass('active');
+        if (widget.hasClass('active')) {
+            chatWindow.fadeIn(300);
+            scrollToBottom();
+        } else {
+            chatWindow.fadeOut(300);
+        }
     });
 
     // Function to create typing indicator element
@@ -346,14 +354,14 @@ jQuery(document).ready(function($) {
                 chatMessages.append(messageDiv);
                 scrollToBottom();
 
-                // Then fetch and show suggestions
+                // Then fetch and show suggestions immediately
                 if (messageId) {
                     console.log('Fetching suggestions for message:', messageId);
                     const suggestions = await fetchSuggestions(messageId);
                     
                     if (suggestions && suggestions.length > 0) {
                         const $suggestionsContainer = $(`
-                            <div style="opacity: 0;">
+                            <div class="espbot-suggestions-container">
                                 <div class="espbot-try-ask">
                                     <i class="fa fa-star"></i>
                                     Essayez de demander
@@ -368,17 +376,8 @@ jQuery(document).ready(function($) {
                             </div>
                         `);
                         
-                        // Add suggestions after the message
                         messageDiv.append($suggestionsContainer);
-                        
-                        // Fade in suggestions
-                        setTimeout(() => {
-                            $suggestionsContainer.css({
-                                'transition': 'opacity 0.3s ease',
-                                'opacity': '1'
-                            });
-                            scrollToBottom();
-                        }, 300);
+                        scrollToBottom();
                     }
                 }
 
@@ -390,6 +389,7 @@ jQuery(document).ready(function($) {
         } catch (error) {
             console.error('Error in sendMessageToBackend:', error);
             hideTypingIndicator();
+            checkServerStatus(); // Check server status on error
             throw error;
         }
     }
@@ -429,12 +429,67 @@ jQuery(document).ready(function($) {
     }
 
     // Function to start new chat
-    function startNewChat() {
-        currentSessionId = '';
+    async function startNewChat() {
+        currentSessionId = generateUserId();
         conversationId = '';
         chatMessages.empty();
+        
+        // Show welcome message immediately
         addBotMessage("Bonjour ! Je suis ESPbot, l'assistant virtuel officiel de l'École Supérieure Polytechnique (ESP). Je suis là pour vous aider avec vos questions et vous fournir des informations précises et pertinentes sur l'ESP. Comment puis-je vous aider aujourd'hui ?");
+
+        // Initialize session in background
+        try {
+            const response = await $.ajax({
+                url: espbotAjax.ajaxurl,
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    action: 'espbot_send_message',
+                    nonce: espbotAjax.nonce,
+                    message: 'start_new_chat',
+                    conversation_id: '',
+                    user_id: currentSessionId
+                }
+            });
+
+            if (response && response.success && response.data.conversation_id) {
+                conversationId = response.data.conversation_id;
+            }
+        } catch (error) {
+            console.error('Error initializing chat session:', error);
+            // Don't show error message since welcome message is already shown
+        }
     }
+
+    // Function to update server status
+    async function checkServerStatus() {
+        try {
+            await $.ajax({
+                url: espbotAjax.ajaxurl,
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    action: 'espbot_send_message',
+                    nonce: espbotAjax.nonce,
+                    message: 'ping',
+                    conversation_id: conversationId,
+                    user_id: currentSessionId
+                }
+            });
+            
+            // Server is online
+            $('.espbot-status').removeClass('offline');
+            $('.espbot-status span:not(.status-dot)').text('En ligne et prêt à vous aider');
+        } catch (error) {
+            // Server is offline
+            $('.espbot-status').addClass('offline');
+            $('.espbot-status span:not(.status-dot)').text('Serveur hors ligne');
+        }
+    }
+
+    // Check server status initially and every 30 seconds
+    checkServerStatus();
+    setInterval(checkServerStatus, 30000);
 
     // Event listeners
     sendButton.on('click', sendMessage);
@@ -443,6 +498,12 @@ jQuery(document).ready(function($) {
             e.preventDefault();
             sendMessage();
         }
+    });
+
+    // Add click handler for Nouvelle chat button
+    $('#espbot-nouvelle-chat').on('click', function(e) {
+        e.preventDefault();
+        startNewChat();
     });
 
     // Auto-resize textarea
