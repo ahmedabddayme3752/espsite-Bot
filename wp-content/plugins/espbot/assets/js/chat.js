@@ -216,20 +216,69 @@ jQuery(document).ready(function($) {
         scrollToBottom();
     }
 
+    // Function to generate a random user ID
+    function generateUserId() {
+        return 'user-' + Math.random().toString(36).substring(2, 15);
+    }
+
     let currentSessionId = '';
     let conversationId = '';
+
+    // Initialize session ID if not exists
+    if (!currentSessionId) {
+        currentSessionId = localStorage.getItem('espbot_user_id') || generateUserId();
+        localStorage.setItem('espbot_user_id', currentSessionId);
+    }
+
+    // Function to fetch suggestions
+    async function fetchSuggestions(messageId) {
+        try {
+            // Ensure we have a valid user ID
+            if (!currentSessionId) {
+                currentSessionId = localStorage.getItem('espbot_user_id') || generateUserId();
+                localStorage.setItem('espbot_user_id', currentSessionId);
+            }
+
+            const suggestionsUrl = `${espbotAjax.api_url}/messages/${messageId}/suggested?user=${encodeURIComponent(currentSessionId)}`;
+            console.log('Fetching suggestions from:', suggestionsUrl);
+            console.log('Using API key:', espbotAjax.api_key);
+            console.log('Current user ID:', currentSessionId);
+            
+            const response = await fetch(suggestionsUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${espbotAjax.api_key}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            console.log('Suggestions API response status:', response.status);
+            const data = await response.json();
+            console.log('Suggestions API response data:', data);
+            
+            if (data.result === 'success' && Array.isArray(data.data)) {
+                return data.data;
+            }
+            return [];
+        } catch (error) {
+            console.error('Error fetching suggestions:', error);
+            return [];
+        }
+    }
 
     // Function to send message
     async function sendMessage() {
         const message = userInput.val().trim();
-        if (message === '') return;
+        if (!message) return;
 
+        // Clear input
         userInput.val('');
+
+        // Add user message
         addUserMessage(message);
 
         try {
-            const response = await sendMessageToBackend(message);
-            addBotMessage(response);
+            await sendMessageToBackend(message);
         } catch (error) {
             console.error('Error sending message:', error);
             addBotMessage('Désolé, j\'ai rencontré une erreur. Veuillez réessayer plus tard.');
@@ -249,38 +298,116 @@ jQuery(document).ready(function($) {
                     action: 'espbot_send_message',
                     nonce: espbotAjax.nonce,
                     message: userMessage,
-                    conversation_id: conversationId
+                    conversation_id: conversationId,
+                    user_id: currentSessionId
                 }
             });
 
             hideTypingIndicator();
 
             if (!response || !response.success) {
-                const errorMsg = response?.data?.message || 'Unknown error occurred';
-                console.error('Server error:', errorMsg);
-                throw new Error(errorMsg);
+                throw new Error('Invalid response from server');
             }
 
-            const data = response.data;
-            if (!data || typeof data.message === 'undefined') {
-                throw new Error('Invalid response format from server');
+            if (response.data) {
+                if (response.data.conversation_id) {
+                    conversationId = response.data.conversation_id;
+                }
+
+                const messageId = response.data.message_id;
+                const botResponse = response.data.message || response.data;
+
+                // Show bot message immediately
+                const $messageContainer = $(`
+                    <div class="espbot-message espbot-message-bot">
+                        <div class="espbot-message-content">
+                            ${md.render(botResponse)}
+                        </div>
+                    </div>
+                `);
+                chatMessages.append($messageContainer);
+                scrollToBottom();
+
+                // Then fetch and show suggestions
+                if (messageId) {
+                    console.log('Fetching suggestions for message:', messageId);
+                    const suggestions = await fetchSuggestions(messageId);
+                    
+                    if (suggestions && suggestions.length > 0) {
+                        const $suggestionsContainer = $(`
+                            <div style="opacity: 0;">
+                                <div class="espbot-try-ask">
+                                    <i class="fa fa-star"></i>
+                                    Essayez de demander
+                                </div>
+                                <div class="espbot-suggestions">
+                                    ${suggestions.map(suggestion => `
+                                        <button class="espbot-suggestion-btn" onclick="jQuery(this).closest('.espbot-suggestions').find('button').prop('disabled', true); jQuery('#espbot-chat-input').val('${escapeHtml(suggestion)}'); jQuery('#espbot-chat-send').click();">
+                                            ${escapeHtml(suggestion)}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `);
+                        
+                        // Add suggestions after the message
+                        $messageContainer.append($suggestionsContainer);
+                        
+                        // Fade in suggestions
+                        setTimeout(() => {
+                            $suggestionsContainer.css({
+                                'transition': 'opacity 0.3s ease',
+                                'opacity': '1'
+                            });
+                            scrollToBottom();
+                        }, 300);
+                    }
+                }
+
+                return botResponse;
             }
 
-            // Update conversation ID if provided
-            if (data.conversation_id) {
-                conversationId = data.conversation_id;
-            }
-
-            return data.message;
+            return response.message || 'An error occurred';
 
         } catch (error) {
+            console.error('Error in sendMessageToBackend:', error);
             hideTypingIndicator();
-            console.error('Network error:', error);
-            if (error.status === 403) {
-                throw new Error('Authentication error. Please refresh the page and try again.');
-            }
-            throw new Error(error.message || 'Error communicating with the server');
+            throw error;
         }
+    }
+
+    // Function to create suggestions HTML
+    function createSuggestionsHtml(suggestions) {
+        return `
+            <div class="espbot-suggestions">
+                ${suggestions.map(suggestion => `
+                    <button class="espbot-suggestion-btn" onclick="jQuery(this).closest('.espbot-suggestions').find('button').prop('disabled', true); jQuery('#espbot-chat-input').val('${escapeHtml(suggestion)}'); jQuery('#espbot-chat-send').click();">
+                        ${escapeHtml(suggestion)}
+                    </button>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // Function to display suggestions (keeping for compatibility)
+    function displaySuggestions(suggestions) {
+        if (!suggestions || !suggestions.length) {
+            console.log('No suggestions to display');
+            return;
+        }
+        
+        console.log('Displaying suggestions:', suggestions);
+        const $suggestions = $(createSuggestionsHtml(suggestions));
+        chatMessages.append($suggestions);
+        
+        setTimeout(() => {
+            $suggestions.css({
+                'transition': 'opacity 0.3s ease',
+                'opacity': '1'
+            });
+        }, 100);
+        
+        scrollToBottom();
     }
 
     // Function to start new chat

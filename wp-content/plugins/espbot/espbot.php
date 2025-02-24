@@ -24,7 +24,10 @@ if (!defined('ESPBOT_API_KEY')) {
     define('ESPBOT_API_KEY', 'app-IpWkVHUIINQVrU4fOBmJuE0b'); // Set your API key in wp-config.php
 }
 if (!defined('ESPBOT_API_URL')) {
-    define('ESPBOT_API_URL', 'http://45.147.251.181/v1/chat-messages');
+    define('ESPBOT_API_URL', 'http://45.147.251.181/v1');
+}
+if (!defined('ESPBOT_API_CHAT_URL')) {
+    define('ESPBOT_API_CHAT_URL', ESPBOT_API_URL . '/chat-messages');
 }
 
 // Include required files
@@ -60,7 +63,10 @@ function espbot_enqueue_scripts() {
     wp_localize_script('espbot-chat-js', 'espbotAjax', array(
         'ajaxurl' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('espbot_send_message'),
-        'api_url' => defined('ESPBOT_API_URL') ? ESPBOT_API_URL : 'http://45.147.251.181/v1/chat-messages'
+        'api_url' => ESPBOT_API_URL,
+        'api_chat_url' => ESPBOT_API_CHAT_URL,
+        'api_key' => defined('ESPBOT_API_KEY') ? ESPBOT_API_KEY : 'app-IpWkVHUIINQVrU4fOBmJuE0b',
+        'debug' => WP_DEBUG
     ));
 }
 add_action('wp_enqueue_scripts', 'espbot_enqueue_scripts');
@@ -108,7 +114,7 @@ function espbot_handle_message() {
         
         $message = sanitize_text_field($_POST['message']);
         $conversation_id = isset($_POST['conversation_id']) ? sanitize_text_field($_POST['conversation_id']) : '';
-        $user_id = get_current_user_id() ?: 'guest-' . substr(md5($_SERVER['REMOTE_ADDR']), 0, 8);
+        $user_id = isset($_POST['user_id']) ? sanitize_text_field($_POST['user_id']) : 'guest-' . substr(md5($_SERVER['REMOTE_ADDR']), 0, 8);
         
         error_log('ESPBot: Processing message from user: ' . $user_id);
         
@@ -136,7 +142,7 @@ function espbot_handle_message() {
             'timeout' => 120
         ];
 
-        $api_url = defined('ESPBOT_API_URL') ? ESPBOT_API_URL : 'http://45.147.251.181/v1/chat-messages';
+        $api_url = defined('ESPBOT_API_CHAT_URL') ? ESPBOT_API_CHAT_URL : 'http://45.147.251.181/v1/chat-messages';
         error_log('ESPBot: Sending request to API: ' . $api_url);
         error_log('ESPBot: Request data: ' . json_encode($request_data));
         
@@ -179,6 +185,7 @@ function espbot_handle_message() {
         wp_send_json_success([
             'message' => $data['answer'],
             'conversation_id' => $data['conversation_id'] ?? '',
+            'message_id' => $data['id'] ?? '', // Add message_id to the response
             'metadata' => $data['metadata'] ?? null
         ]);
 
