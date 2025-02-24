@@ -248,10 +248,7 @@ jQuery(document).ready(function($) {
             }
 
             const suggestionsUrl = `${espbotAjax.api_url}/messages/${messageId}/suggested?user=${encodeURIComponent(currentSessionId)}`;
-            console.log('Fetching suggestions from:', suggestionsUrl);
-            console.log('Using API key:', espbotAjax.api_key);
-            console.log('Current user ID:', currentSessionId);
-            
+
             const response = await fetch(suggestionsUrl, {
                 method: 'GET',
                 headers: {
