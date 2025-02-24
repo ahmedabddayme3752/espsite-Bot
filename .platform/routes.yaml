@@ -1,7 +1,11 @@
 "http://{default}/":
     type: upstream
     upstream: "app:http"
+    tls:
+        enabled: false
 
 "http://www.{default}/":
     type: redirect
     to: "http://{default}/"
+    tls:
+        enabled: false
