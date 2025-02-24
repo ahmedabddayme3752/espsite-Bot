@@ -317,15 +317,33 @@ jQuery(document).ready(function($) {
                 const messageId = response.data.message_id;
                 const botResponse = response.data.message || response.data;
 
-                // Show bot message immediately
-                const $messageContainer = $(`
-                    <div class="espbot-message espbot-message-bot">
-                        <div class="espbot-message-content">
-                            ${md.render(botResponse)}
-                        </div>
-                    </div>
-                `);
-                chatMessages.append($messageContainer);
+                const messageDiv = $('<div>').addClass('espbot-message espbot-message-bot');
+                const contentDiv = $('<div>').addClass('espbot-message-content');
+                contentDiv.html(md.render(botResponse));
+
+                // Add copy button
+                const copyButton = $('<button>')
+                    .addClass('copy-message')
+                    .html('<i class="fas fa-copy"></i>')
+                    .on('click', function(e) {
+                        e.preventDefault();
+                        const content = contentDiv.clone();
+                        content.find('.copy-message').remove();
+                        const textToCopy = content.text().trim();
+                        
+                        copyToClipboard(textToCopy);
+                        
+                        // Show feedback
+                        const $button = $(this);
+                        $button.html('<i class="fas fa-check"></i>');
+                        setTimeout(() => {
+                            $button.html('<i class="fas fa-copy"></i>');
+                        }, 2000);
+                    });
+                
+                contentDiv.append(copyButton);
+                messageDiv.append(contentDiv);
+                chatMessages.append(messageDiv);
                 scrollToBottom();
 
                 // Then fetch and show suggestions
@@ -351,7 +369,7 @@ jQuery(document).ready(function($) {
                         `);
                         
                         // Add suggestions after the message
-                        $messageContainer.append($suggestionsContainer);
+                        messageDiv.append($suggestionsContainer);
                         
                         // Fade in suggestions
                         setTimeout(() => {
