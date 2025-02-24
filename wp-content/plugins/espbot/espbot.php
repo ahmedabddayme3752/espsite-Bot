@@ -24,7 +24,7 @@ if (!defined('ESPBOT_API_KEY')) {
     define('ESPBOT_API_KEY', 'app-IpWkVHUIINQVrU4fOBmJuE0b'); // Set your API key in wp-config.php
 }
 if (!defined('ESPBOT_API_URL')) {
-    define('ESPBOT_API_URL', 'http://45.147.251.181/v1');
+    define('ESPBOT_API_URL', 'https://45.147.251.181/v1');
 }
 if (!defined('ESPBOT_API_CHAT_URL')) {
     define('ESPBOT_API_CHAT_URL', ESPBOT_API_URL . '/chat-messages');
@@ -142,7 +142,7 @@ function espbot_handle_message() {
             'timeout' => 120
         ];
 
-        $api_url = defined('ESPBOT_API_CHAT_URL') ? ESPBOT_API_CHAT_URL : 'http://45.147.251.181/v1/chat-messages';
+        $api_url = defined('ESPBOT_API_CHAT_URL') ? ESPBOT_API_CHAT_URL : 'https://45.147.251.181/v1/chat-messages';
         error_log('ESPBot: Sending request to API: ' . $api_url);
         error_log('ESPBot: Request data: ' . json_encode($request_data));
         
